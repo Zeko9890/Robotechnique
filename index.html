@@ -1,938 +1,887 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ShoppingCart, Menu, X, ArrowRight, TrendingUp, Zap, Atom, Plus, Minus, Trash2, Phone, CheckCircle } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
 
-// NOTE: Three.js library is assumed to be globally available in this execution environment.
-const THREE = window.THREE; // Access global THREE object
+<!-- Google Font (Inter) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
-// Amazon Seller Link for Customer Trust
-const AMAZON_LINK = "https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb";
-// WhatsApp Business Number for Confirmation
-const WHATSAPP_NUMBER = '919718335330'; // +91 97183 35330
-
-// --- Global Setup & Styles ---
-const globalStyles = `
-/* Custom Styles for aesthetic polish */
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.scroll-fade-in {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.scroll-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.product-card-hover {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.product-card-hover:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 25px -5px rgba(255, 127, 80, 0.1), 0 8px 10px -6p x rgba(255, 127, 80, 0.1);
-}
-
-/* Custom Logo Styling for the two-tone 'T' (LIGHT BACKGROUND - HEADER) */
-.half-color-t {
-    /* Black (#111827) to Light Blue (#38bdf8 - sky-500) gradient */
-    background-image: linear-gradient(to right, #111827 50%, #38bdf8 50%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent;
-    display: inline-block;
-    font-weight: 900;
-}
-
-/* Custom Logo Styling for the two-tone 'T' (DARK BACKGROUND - FOOTER) */
-.half-color-t-dark {
-    /* Light Gray (#f3f4f6 - gray-100) to Light Blue (#7dd3fc - sky-400) gradient */
-    background-image: linear-gradient(to right, #f3f4f6 50%, #7dd3fc 50%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent;
-    display: inline-block;
-    font-weight: 900;
-}
-
-/* Scroll-triggered header blur effect */
-.header-scrolled {
-    background-color: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(12px) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-/* New styles for the Add to Cart Toast loading animation */
-.toast-enter {
-    animation: toastIn 0.3s forwards;
-    opacity: 0;
-    transform: translateX(100%);
-}
-@keyframes toastIn {
-    0% { transform: translateX(100%); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
-}
-
-/* Modal backdrop for checkout */
-.modal-backdrop {
-    background-color: rgba(17, 24, 39, 0.85); /* Darker, slightly blue tint */
-}
-/* Ensure enough padding for content clearance above the fixed footer overlay */
-.full-page-content {
-    min-height: calc(100vh - 80px); /* Adjust based on header height */
-}
-`;
-
-// Helper function to format prices as INR
-const formatINR = (amount) => {
-    // Convert to number, then format with Indian locale
-    const num = Number(amount);
-    return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(num);
-};
-
-// Function to clean and parse the INR price string (used in CartDrawer calculations)
-const cleanPrice = (priceString) => {
-    // Remove '₹', ',', and any trailing '.00' then parse as float
-    const cleaned = priceString.replace(/₹/g, '').replace(/,/g, '').replace(/\.00$/, '').trim();
-    return parseFloat(cleaned) || 0;
-};
-
-// --- THREE.JS DYNAMIC BACKGROUND COMPONENT (Modern Robotics/Electricity Flow) ---
-const ThreeDBackground = () => {
-    const mountRef = useRef(null);
-
-    useEffect(() => {
-        if (!THREE || !mountRef.current) return;
-
-        let scene, camera, renderer, animationFrameId;
-        const width = mountRef.current.clientWidth;
-        const height = mountRef.current.clientHeight;
-        const nodes = [];
-        const lines = [];
-        let time = 0; // Global time counter for animation
-
-        // --- Setup Scene, Camera, Renderer ---
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-        camera.position.z = 20; // Pull camera back to view the network
-
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(width, height);
-        renderer.setClearColor(0xffffff, 0); // Transparent background
-        mountRef.current.appendChild(renderer.domElement);
-        
-        // --- Create Node-Line Network ---
-        const nodeCount = 150; // Number of nodes in the network
-        const nodeDistance = 10; // Max distance for nodes to connect
-        const fieldSize = 50; // Size of the 3D space for nodes
-
-        // Create Nodes (small spheres)
-        const nodeGeometry = new THREE.SphereGeometry(0.1, 8, 8); // Small spheres
-        const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x87CEEB, transparent: true, opacity: 0.8 }); // Light blue, semi-transparent
-
-        for (let i = 0; i < nodeCount; i++) {
-            const node = new THREE.Mesh(nodeGeometry, nodeMaterial);
-            node.position.x = THREE.MathUtils.randFloatSpread(fieldSize);
-            node.position.y = THREE.MathUtils.randFloatSpread(fieldSize);
-            node.position.z = THREE.MathUtils.randFloatSpread(fieldSize / 2); // Less depth spread
-            node.userData.initialPosition = node.position.clone(); // Save for wave motion
-            nodes.push(node);
-            scene.add(node);
+<!-- AOS (scroll animations, optional if Gemini used it) -->
+<link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script>
+  AOS.init();
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboTechnique - Premium Robotics & IoT Shop</title>
+    <link rel="icon" href="logo.jpg">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        // Create Lines (connections between nearby nodes)
-        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xADD8E6, transparent: true, opacity: 0.3 }); // Lighter blue, more transparent
-
-        for (let i = 0; i < nodeCount; i++) {
-            for (let j = i + 1; j < nodeCount; j++) {
-                const nodeA = nodes[i];
-                const nodeB = nodes[j];
-                const distance = nodeA.position.distanceTo(nodeB.position);
-
-                if (distance < nodeDistance) {
-                    const lineGeometry = new THREE.BufferGeometry().setFromPoints([nodeA.position, nodeB.position]);
-                    const line = new THREE.Line(lineGeometry, lineMaterial);
-                    line.userData.nodes = [nodeA, nodeB]; // Keep reference to connected nodes
-                    line.userData.originalOpacity = lineMaterial.opacity;
-                    lines.push(line);
-                    scene.add(line);
-                }
-            }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #ffffff;
         }
 
-        // --- Animation Loop ---
-        const animate = () => {
-            animationFrameId = requestAnimationFrame(animate);
-            time += 0.01;
-
-            // Update Node Positions (Subtle Wave/Breath Motion)
-            nodes.forEach((node, index) => {
-                const initial = node.userData.initialPosition;
-                node.position.x = initial.x + Math.sin(time * 0.2 + index * 0.5) * 0.5;
-                node.position.y = initial.y + Math.cos(time * 0.3 + index * 0.3) * 0.5;
-                node.position.z = initial.z + Math.sin(time * 0.1 + index * 0.7) * 0.2;
-            });
-
-            // Update Lines (Re-link to node positions, and "electricity flow" effect)
-            lines.forEach(line => {
-                const nodeA = line.userData.nodes[0];
-                const nodeB = line.userData.nodes[1];
-                
-                // Update line geometry to follow moving nodes
-                const positions = line.geometry.attributes.position.array;
-                positions[0] = nodeA.position.x;
-                positions[1] = nodeA.position.y;
-                positions[2] = nodeA.position.z;
-                positions[3] = nodeB.position.x;
-                positions[4] = nodeB.position.y;
-                positions[5] = nodeB.position.z;
-                line.geometry.attributes.position.needsUpdate = true;
-
-                // Electricity flow effect: subtly pulse line opacity/color
-                const pulse = Math.sin(time * 5 + line.id) * 0.1 + 0.9; // Fast pulse between 0.8 and 1.0
-                line.material.opacity = line.userData.originalOpacity * pulse;
-            });
-
-            // Rotate the entire network slowly
-            scene.rotation.y += 0.00005;
-            scene.rotation.x += 0.00002;
-
-            renderer.render(scene, camera);
-        };
-
-        animate();
-
-        // --- Handle Resize ---
-        const handleResize = () => {
-            const newWidth = mountRef.current.clientWidth;
-            const newHeight = mountRef.current.clientHeight;
-            camera.aspect = newWidth / newHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(newWidth, newHeight);
-        };
-        window.addEventListener('resize', handleResize);
-
-        // --- Cleanup ---
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            cancelAnimationFrame(animationFrameId);
-            if (mountRef.current && renderer.domElement) {
-                mountRef.current.removeChild(renderer.domElement);
-            }
-            // Dispose of resources (important for memory)
-            renderer.dispose();
-            nodeGeometry.dispose();
-            nodeMaterial.dispose();
-            lineMaterial.dispose();
-            nodes.forEach(node => scene.remove(node));
-            lines.forEach(line => {
-                line.geometry.dispose();
-                scene.remove(line);
-            });
-        };
-    }, []);
-
-    // The container uses fixed positioning and index -1 to stay behind content
-    return (
-        <div 
-            ref={mountRef} 
-            className="fixed top-0 left-0 w-full h-full z-0 pointer-events-none opacity-90" 
-            aria-hidden="true" 
-            style={{ backgroundColor: '#f9fafb' /* Very light background */ }}
-        ></div>
-    );
-};
-// --- END THREE.JS BACKGROUND COMPONENT ---
-
-
-// --- General Components ---
-
-// Component for handling scroll-based fade-in effects (mimics AOS)
-const AnimatedSection = ({ children, delay = 0 }) => {
-    const ref = useRef(null);
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('scroll-visible');
-                    observer.unobserve(entry.target);
-                }
-            },
-            { threshold: 0.1 }
-        );
-        if (ref.current) {
-            ref.current.classList.add('scroll-fade-in');
-            ref.current.style.transitionDelay = `${delay}ms`;
-            observer.observe(ref.current);
+        /* Custom Styles */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        return () => {
-            if (ref.current) observer.unobserve(ref.current);
-        };
-    }, [delay]);
-    return <div ref={ref}>{children}</div>;
-};
 
-// Component for the "Adding to Cart" smooth loading animation/toast
-const AddingToCartToast = () => (
-    <div className="fixed top-20 right-6 z-[60] p-4 bg-sky-600 text-white rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 toast-enter border-b-4 border-orange-300">
-        <Zap className="w-5 h-5 animate-pulse" />
-        <span className="font-semibold">Item added to cart!</span>
+        .scroll-fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .scroll-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .product-card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(255, 127, 80, 0.1), 0 8px 10px -6px rgba(255, 127, 80, 0.1);
+        }
+
+        /* Custom Logo Styling */
+        .half-color-t {
+            background-image: linear-gradient(to right, #111827 50%, #38bdf8 50%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            font-weight: 900;
+        }
+
+        .half-color-t-dark {
+            background-image: linear-gradient(to right, #f3f4f6 50%, #7dd3fc 50%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            font-weight: 900;
+        }
+
+        .header-scrolled {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(12px) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .toast-enter {
+            animation: toastIn 0.3s forwards;
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        @keyframes toastIn {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        .modal-backdrop {
+            background-color: rgba(17, 24, 39, 0.85);
+        }
+
+        .full-page-content {
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Utility Classes */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #f97316;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #ea580c;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background-color: #0ea5e9;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #0284c7;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        @media (min-width: 768px) {
+            .md\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+            .md\\:flex { display: flex; }
+            .md\\:hidden { display: none; }
+        }
+
+        @media (min-width: 1024px) {
+            .lg\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #0ea5e9;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0284c7;
+        }
+    </style>
+</head>
+<body>
+    <!-- Three.js Background -->
+    <div id="three-background" class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none opacity-90" style="background-color: #f9fafb;"></div>
+
+    <!-- Cart Drawer -->
+    <div id="cart-drawer" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-2xl z-70 transition-transform duration-400 ease-out flex flex-col translate-x-full">
+        <!-- Cart content will be inserted here by JavaScript -->
     </div>
-);
 
-// Product Card Component
-const ProductCard = ({ title, category, price, imgSrc, imgAlt, delay, productData, onAddToCart }) => (
-    <AnimatedSection delay={delay}>
-        <div className="bg-white product-card-hover rounded-2xl p-6 shadow-xl border border-gray-100 hover:border-orange-200">
-            <div className="h-48 bg-gray-50 flex items-center justify-center p-4 rounded-xl mb-4 overflow-hidden">
-                <img src={imgSrc} alt={imgAlt} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" onError={(e) => { e.target.onerror = null; e.target.src = imgSrc.replace('400x300', '300x200'); }} />
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="fixed inset-0 z-80 flex items-center justify-center modal-backdrop transition-opacity duration-300 hidden">
+        <!-- Modal content will be inserted here by JavaScript -->
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 right-6 z-60 p-4 bg-sky-600 text-white rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 toast-enter border-b-4 border-orange-300 hidden">
+        <i data-lucide="zap" class="w-5 h-5 animate-pulse"></i>
+        <span class="font-semibold">Item added to cart!</span>
+    </div>
+
+    <!-- Navigation -->
+    <header id="header" class="sticky top-0 bg-white bg-opacity-95 backdrop-blur-sm shadow-lg z-50 transition-all duration-300">
+        <nav class="container">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0">
+                    <a href="#" class="flex items-center gap-3">
+                        <div class="h-12 w-12 bg-gradient-to-br from-sky-500 to-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                            RT
+                        </div>
+                        <span class="text-3xl font-extrabold tracking-tight">
+                            <span class="text-gray-900">Robo</span>
+                            <span class="half-color-t">T</span>
+                            <span class="text-sky-500">echnique</span>
+                        </span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="hidden md:flex space-x-8">
+                        <a href="#home" class="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">Home</a>
+                        <a href="#shop" class="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">Shop</a>
+                        <a href="#brand" class="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">Brand</a>
+                        <a href="#contact" class="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">Contact</a>
+                    </div>
+                    
+                    <button id="cart-button" class="relative p-2 rounded-full text-gray-600 hover:text-orange-500 transition duration-200">
+                        <i data-lucide="shopping-cart" class="h-7 w-7"></i>
+                        <span id="cart-count" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-orange-500 rounded-full hidden">0</span>
+                    </button>
+
+                    <button id="mobile-menu-button" class="md:hidden p-2 rounded-md text-gray-600 hover:text-orange-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-500">
+                        <i data-lucide="menu" class="h-6 w-6"></i>
+                    </button>
+                </div>
             </div>
-            <span className="text-xs font-semibold text-sky-500 uppercase tracking-wider mb-1 block">{category}</span>
-            <h3 className="text-xl font-bold mb-2 truncate text-gray-800">{title}</h3>
-            <p className="text-gray-500 mb-4 text-sm">Modular, high-speed unit designed for seamless integration.</p>
-            <div className="flex justify-between items-center mb-4">
-                <span className="text-3xl font-extrabold text-gray-900">{formatINR(cleanPrice(price))}</span>
+        </nav>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden absolute w-full bg-white shadow-xl transition-all duration-300 h-0 opacity-0 overflow-hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#home" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-sky-50 hover:text-sky-600">Home</a>
+                <a href="#shop" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-sky-50 hover:text-sky-600">Shop</a>
+                <a href="#brand" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-sky-50 hover:text-sky-600">Brand</a>
+                <a href="#contact" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-sky-50 hover:text-sky-600">Contact</a>
             </div>
-            
-            {/* Action Buttons: Add to Cart and Amazon Link (Customer Trust) */}
-            <div className="flex flex-col space-y-2">
-                <button 
-                    onClick={() => onAddToCart(productData)}
-                    className="w-full flex items-center justify-center py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition duration-300 shadow-lg shadow-orange-300/50"
-                >
-                    Add to Cart
-                </button>
-                <a 
-                    href={AMAZON_LINK} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center py-2 text-sm bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition duration-300 border border-gray-300"
-                >
-                    {/* Inline SVG for Amazon icon for simplicity */}
-                    <svg className='w-4 h-4 mr-2' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fillRule="evenodd" clipRule="evenodd" d="M11.969 2.146c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636zm-.322 13.91l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077zm3.111-3.111l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077z" fill="#FF9900"/>
-                        <path d="M12.039 2C6.545 2 2.14 6.31 2.138 11.693c0 1.832.505 3.53 1.385 5.013L2 22l5.441-1.472a10.02 10.02 0 004.598 1.18c5.494 0 9.888-4.31 9.89-9.693C21.92 6.31 17.525 2 12.039 2z" fill="#000000"/>
-                        <path d="M12.039 2c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636z" fill="#FFFFFF"/>
-                        <path d="M12.039 2c5.494 0 9.888 4.31 9.89 9.693C21.92 6.31 17.525 2 12.039 2z" fill="#FF9900"/>
-                    </svg>
-                    Buy on Amazon (Verified Seller)
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-10 full-page-content">
+        <!-- Hero Section -->
+        <section id="home" class="pt-24 pb-32 sm:pt-32 sm:pb-48 container text-center">
+            <div class="scroll-fade-in">
+                <p class="text-base font-semibold text-orange-600 mb-3 tracking-wide uppercase">The Future Is Modular</p>
+                <h1 class="text-6xl sm:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6 text-gray-900 leading-tight">
+                    Premium Robotics & <span class="text-sky-600">IoT Components</span>
+                </h1>
+                <p class="text-xl sm:text-2xl text-gray-600 max-w-4xl mx-auto mb-10">
+                    Engineered for precision and built for the next generation of automation projects.
+                </p>
+                <a href="#shop" class="btn btn-primary inline-flex items-center px-10 py-4 rounded-full shadow-2xl ring-4 ring-orange-500/30">
+                    Shop The Collection
+                    <i data-lucide="arrow-right" class="w-5 h-5 ml-2"></i>
                 </a>
             </div>
-        </div>
-    </AnimatedSection>
-);
-
-// Checkout Modal Component (Handles Phone input and WhatsApp link generation)
-const CheckoutModal = ({ isOpen, onClose, cart, total, itemCount }) => {
-    // START: ALL HOOKS MUST BE CALLED HERE UNCONDITIONALLY
-    const [phone, setPhone] = useState('');
-    const [error, setError] = useState('');
-    const [step, setStep] = useState(1); // 1: Phone Input, 2: WhatsApp Link
-
-    // Moved useCallback here to satisfy the Rules of Hooks
-    const generateWhatsAppURL = useCallback(() => {
-        let message = `*RoboTechnique Order Confirmation*\n\n`;
-        message += `*Order Total:* ${formatINR(total)}\n`;
-        message += `*Contact:* +91 ${phone}\n\n`;
-        message += `*Items (${itemCount}):*\n`;
+        </section>
         
-        cart.forEach((item, index) => {
-            const itemPrice = cleanPrice(item.price);
-            message += `${index + 1}. ${item.title} (Qty: ${item.quantity}, Price: ${formatINR(itemPrice * item.quantity)})\n`;
-        });
-        
-        message += `\n*Please confirm this order and receive payment details via this chat.*`;
+        <!-- About/Brand Section -->
+        <section id="brand" class="py-20 sm:py-32">
+            <div class="container">
+                <div class="lg:flex lg:space-x-12">
+                    <div class="lg:w-1/2">
+                        <div class="scroll-fade-in">
+                            <h2 class="text-4xl sm:text-5xl font-extrabold text-gray-800 mb-6 leading-snug">
+                                Crafting the <span class="text-sky-600">Foundation</span> of Automation
+                            </h2>
+                        </div>
+                    </div>
+                    <div class="lg:w-1/2 mt-8 lg:mt-0 space-y-8">
+                        <div class="scroll-fade-in">
+                            <div class="flex items-start space-x-4">
+                                <i data-lucide="trending-up" class="w-8 h-8 text-orange-500 flex-shrink-0 mt-1"></i>
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-800">Uncompromising Quality</h3>
+                                    <p class="mt-1 text-gray-600">Every component is tested under extreme conditions to ensure reliability and superior performance.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="scroll-fade-in">
+                            <div class="flex items-start space-x-4">
+                                <i data-lucide="zap" class="w-8 h-8 text-orange-500 flex-shrink-0 mt-1"></i>
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-800">Seamless Integration</h3>
+                                    <p class="mt-1 text-gray-600">Designed for open standards with plug-and-play compatibility across popular platforms.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="scroll-fade-in">
+                            <div class="flex items-start space-x-4">
+                                <i data-lucide="atom" class="w-8 h-8 text-orange-500 flex-shrink-0 mt-1"></i>
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-800">Future-Proofed Technology</h3>
+                                    <p class="mt-1 text-gray-600">Incorporating the latest in Edge AI and decentralized control for next-gen projects.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        const encodedMessage = encodeURIComponent(message);
-        // CRITICAL UPDATE: Use the defined business number
-        return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-    }, [cart, total, phone, itemCount]);
-    // END: ALL HOOKS CALLED
+        <!-- Product Showcase Section -->
+        <section id="shop" class="py-20 sm:py-32 bg-white shadow-2xl rounded-t-[40px] mt-12 border-t-8 border-sky-100">
+            <div class="container">
+                <div class="scroll-fade-in">
+                    <h2 class="text-4xl font-extrabold text-center mb-4 text-gray-800">Our Core Product Line</h2>
+                    <p class="text-center text-xl text-gray-500 mb-16 max-w-3xl mx-auto">
+                        The essential components driving innovation in robotics and complex systems worldwide.
+                    </p>
+                </div>
 
-    // Conditional return must follow all hook calls
-    if (!isOpen) return null;
-
-    const handlePhoneChange = (e) => {
-        const value = e.target.value.replace(/\D/g, ''); // Only digits
-        setPhone(value);
-        if (error && value.length === 10) {
-            setError('');
-        }
-    };
-
-    const handleProceed = () => {
-        if (phone.length !== 10) {
-            setError('Please enter a valid 10-digit Indian phone number.');
-            return;
-        }
-        setError('');
-        setStep(2);
-    };
-
-    return (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center modal-backdrop transition-opacity duration-300" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="bg-white rounded-2xl w-full max-w-md m-4 shadow-3xl p-6 sm:p-8 transform transition-all duration-300 scale-100">
-                
-                <div className="flex justify-between items-center border-b pb-4 mb-6">
-                    <h3 className="text-2xl font-extrabold text-gray-900">
-                        {step === 1 ? 'Enter Phone Number' : 'Complete Order via WhatsApp'}
-                    </h3>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition">
-                        <X className="w-6 h-6 text-gray-600" />
-                    </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" id="products-grid">
+                    <!-- Products will be loaded by JavaScript -->
                 </div>
                 
-                {step === 1 && (
-                    <div className='space-y-6'>
-                        <div className="flex items-center space-x-3 p-3 bg-sky-50 border-l-4 border-sky-400 rounded-lg">
-                            <Phone className='w-5 h-5 text-sky-600'/>
-                            <p className="text-sm text-gray-700 font-medium">
-                                We use WhatsApp for final confirmation and secure payment link. The number is **+91 97183 35330**.
-                            </p>
-                        </div>
+                <div class="scroll-fade-in text-center mt-16">
+                    <a href="#shop" class="inline-flex justify-center items-center px-8 py-3 border border-sky-500 text-base font-bold rounded-full shadow-lg text-sky-600 bg-white hover:bg-sky-50 transition duration-300 transform hover:scale-105">
+                        Browse All Categories (<span id="product-count">8</span> Products)
+                    </a>
+                </div>
+            </div>
+        </section>
 
-                        <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Mobile Number (10 digits)</label>
-                            <div className="mt-1 flex rounded-lg shadow-sm">
-                                <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm font-semibold">+91</span>
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    id="phone"
-                                    maxLength="10"
-                                    value={phone}
-                                    onChange={handlePhoneChange}
-                                    className="flex-1 block w-full px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-orange-500 focus:border-orange-500 transition duration-150"
-                                    placeholder="e.g., 9876543210"
-                                    required
-                                />
-                            </div>
-                            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-                        </div>
-
-                        <button 
-                            onClick={handleProceed}
-                            disabled={phone.length !== 10}
-                            className="w-full flex items-center justify-center py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition duration-300 shadow-lg shadow-orange-300/50 disabled:bg-gray-400"
-                        >
-                            Confirm Details & Proceed to WhatsApp
-                            <ArrowRight className='w-5 h-5 ml-2'/>
-                        </button>
-                    </div>
-                )}
+        <!-- Contact Form -->
+        <section id="contact" class="py-20 sm:py-32">
+            <div class="container">
+                <div class="scroll-fade-in">
+                    <h2 class="text-4xl font-extrabold text-center mb-4 text-gray-800">Get In Touch</h2>
+                    <p class="text-center text-xl text-gray-500 mb-12 max-w-3xl mx-auto">
+                        Need technical specifications or partnership details? Our team is ready to assist.
+                    </p>
+                </div>
                 
-                {step === 2 && (
-                    <div className='text-center space-y-8'>
-                        <CheckCircle className='w-16 h-16 mx-auto text-green-500' />
-                        <h4 className='text-xl font-bold text-gray-800'>Final Step: Confirm Order</h4>
-                        <p className='text-gray-600'>
-                            Click the button below to open WhatsApp. Your order summary will be pre-filled. You will receive the secure payment link after confirmation from **+91 97183 35330**.
-                        </p>
-                        <div className='flex justify-between font-bold text-lg p-3 bg-gray-50 rounded-lg'>
-                            <span>Total Payable:</span>
-                            <span className='text-sky-600'>{formatINR(total)}</span>
+                <div class="scroll-fade-in">
+                    <div class="max-w-xl mx-auto bg-white p-8 sm:p-10 rounded-2xl shadow-2xl border border-gray-100">
+                        <div class="space-y-6">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                                <input type="text" name="name" id="name" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-inner focus:ring-sky-500 focus:border-sky-500 transition duration-150">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Work Email</label>
+                                <input type="email" name="email" id="email" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-inner focus:ring-sky-500 focus:border-sky-500 transition duration-150">
+                            </div>
+                            <div>
+                                <label for="message" class="block text-sm font-medium text-gray-700">Project Inquiry</label>
+                                <textarea id="message" name="message" rows="4" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-inner focus:ring-sky-500 focus:border-sky-500 transition duration-150 resize-none"></textarea>
+                            </div>
+                            <div>
+                                <button type="button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-base font-bold text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition duration-150 transform hover:scale-[1.01]">
+                                    Send Request
+                                </button>
+                            </div>
                         </div>
-                        <a 
-                            href={generateWhatsAppURL()} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="w-full flex items-center justify-center py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition duration-300 shadow-lg shadow-green-300/50"
-                            onClick={onClose}
-                        >
-                            <svg className='w-6 h-6 mr-2' viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12.039 2C6.545 2 2.14 6.31 2.138 11.693c0 1.832.505 3.53 1.385 5.013L2 22l5.441-1.472a10.02 10.02 0 004.598 1.18c5.494 0 9.888-4.31 9.89-9.693C21.92 6.31 17.525 2 12.039 2zM17.18 15.684c-.1-.21-.365-.337-.775-.53c-.41-.194-2.457-1.21-2.848-1.353-.39-.144-.674-.216-.957.215-.284.43-.997 1.353-1.222 1.62-.225.267-.45.297-.83.075-.38-.225-1.597-.589-3.042-1.884-.954-.836-1.597-1.87-1.782-2.185-.184-.315-.02-.49.138-.646.158-.155.352-.376.53-.568.177-.19.237-.323.355-.54.118-.216.059-.406-.03-.568-.089-.162-.83-.186-.957-.184-.128.002-.274.002-.418.002s-.39-.059-.598.27c-.207.327-.79 1.053-.79 2.56 0 1.506 1.157 2.97 1.314 3.197.157.226 2.222 3.4 5.378 4.675 3.155 1.275 3.155.85 3.722.79.568-.06 1.62-.656 1.845-1.29.225-.632.225-1.173.157-1.29z"/>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full bg-gray-900/90 backdrop-blur-md text-gray-400 py-10 mt-12 border-t border-gray-800 relative z-10">
+        <div class="container text-center">
+            <div class="flex flex-col items-center gap-3 mb-3">
+                <div class="h-10 w-10 bg-gradient-to-br from-sky-500 to-orange-500 rounded-lg flex items-center justify-center text-white font-bold">
+                    RT
+                </div>
+                <p class="text-xl font-extrabold tracking-tight">
+                    <span class="text-gray-100">Robo</span>
+                    <span class="half-color-t-dark">T</span>
+                    <span class="text-sky-400">echnique</span>
+                </p>
+            </div>
+            <p class='text-sm mb-3'>Engineered for the future of machines.</p>
+            
+            <div class="space-x-4 mb-2 text-sm">
+                <a href="#" class="hover:text-white transition duration-150">Terms</a>
+                <span class="text-gray-600">|</span>
+                <a href="#" class="hover:text-white transition duration-150">Privacy</a>
+                <span class="text-gray-600">|</span>
+                <a href="#" class="hover:text-white transition duration-150">Careers</a>
+            </div>
+            
+            <p class="mt-2 text-xs">&copy; 2025 RoboTechnique. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Global Constants
+        const AMAZON_LINK = "https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb";
+        const WHATSAPP_NUMBER = '919718335330';
+
+        // State Management
+        let cart = [];
+        let isAddingToCart = false;
+
+        // DOM Elements
+        const cartDrawer = document.getElementById('cart-drawer');
+        const checkoutModal = document.getElementById('checkout-modal');
+        const toast = document.getElementById('toast');
+        const cartButton = document.getElementById('cart-button');
+        const cartCount = document.getElementById('cart-count');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const header = document.getElementById('header');
+        const productsGrid = document.getElementById('products-grid');
+
+        // Product Data
+        const products = [
+            { title: "Quantum Motor Driver Pro", category: "Actuation", price: 4490, imgSrc: "https://placehold.co/400x300/e9d5ff/1e40af?text=Motor+Driver", imgAlt: "Motor Driver" },
+            { title: "Vision-AI Sensor Array", category: "Sensing", price: 12999, imgSrc: "https://placehold.co/400x300/bae6fd/0369a1?text=AI+Vision", imgAlt: "AI Vision Sensor" },
+            { title: "Dev Kit: Arm & Gripper", category: "Kits", price: 8990, imgSrc: "https://placehold.co/400x300/fed7aa/ea580c?text=Robotic+Kit", imgAlt: "Robotic Arm Kit" },
+            { title: "Edge Control Unit v3", category: "Control", price: 5990, imgSrc: "https://placehold.co/400x300/d1d5db/4b5563?text=Control+Unit", imgAlt: "Control Unit" },
+            { title: "Long-Range Lidar Unit", category: "Sensing", price: 15499, imgSrc: "https://placehold.co/400x300/fecaca/dc2626?text=Lidar+Unit", imgAlt: "Lidar Unit" },
+            { title: "Modular Chassis Frame", category: "Kits", price: 6590, imgSrc: "https://placehold.co/400x300/d1fae5/065f46?text=Chassis+Frame", imgAlt: "Chassis Frame" },
+            { title: "High-Speed DC Motor", category: "Actuation", price: 1890, imgSrc: "https://placehold.co/400x300/fff7ed/7c2d12?text=DC+Motor", imgAlt: "DC Motor" },
+            { title: "12V Power Regulator", category: "Control", price: 2990, imgSrc: "https://placehold.co/400x300/e0f2f1/0f766e?text=Power+Regulator", imgAlt: "Power Regulator" },
+        ];
+
+        // Utility Functions
+        function formatINR(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            }).format(amount);
+        }
+
+        function cleanPrice(price) {
+            if (typeof price === 'number') return price;
+            if (typeof price === 'string') {
+                const cleaned = price.replace(/[₹,]/g, '').trim();
+                return parseFloat(cleaned) || 0;
+            }
+            return 0;
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            cartCount.textContent = count;
+            if (count > 0) {
+                cartCount.classList.remove('hidden');
+            } else {
+                cartCount.classList.add('hidden');
+            }
+        }
+
+        // Cart Functions
+        function addToCart(product) {
+            const existingItem = cart.find(item => item.title === product.title);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            updateCartCount();
+            showToast();
+            
+            // Open cart if it's the first item
+            if (cart.length === 1) {
+                openCartDrawer();
+            }
+        }
+
+        function updateQuantity(title, delta) {
+            const item = cart.find(item => item.title === title);
+            if (item) {
+                item.quantity = Math.max(1, item.quantity + delta);
+                updateCartCount();
+                renderCartDrawer();
+            }
+        }
+
+        function removeFromCart(title) {
+            cart = cart.filter(item => item.title !== title);
+            updateCartCount();
+            renderCartDrawer();
+        }
+
+        // UI Functions
+        function showToast() {
+            isAddingToCart = true;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                isAddingToCart = false;
+            }, 1000);
+        }
+
+        function openCartDrawer() {
+            renderCartDrawer();
+            cartDrawer.classList.remove('translate-x-full');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCartDrawer() {
+            cartDrawer.classList.add('translate-x-full');
+            document.body.style.overflow = 'unset';
+        }
+
+        function openCheckoutModal() {
+            const subtotal = cart.reduce((sum, item) => sum + (cleanPrice(item.price) * item.quantity), 0);
+            const shipping = subtotal >= 5000 ? 0 : 100;
+            const total = subtotal + shipping;
+            const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+            
+            renderCheckoutModal(total, itemCount);
+            checkoutModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCheckoutModal() {
+            checkoutModal.classList.add('hidden');
+            document.body.style.overflow = 'unset';
+        }
+
+        // Render Functions
+        function renderProducts() {
+            productsGrid.innerHTML = products.map(product => `
+                <div class="bg-white product-card-hover rounded-2xl p-6 shadow-xl border border-gray-100 hover:border-orange-200 scroll-fade-in">
+                    <div class="h-48 bg-gray-50 flex items-center justify-center p-4 rounded-xl mb-4 overflow-hidden">
+                        <img src="${product.imgSrc}" alt="${product.imgAlt}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
+                    </div>
+                    <span class="text-xs font-semibold text-sky-500 uppercase tracking-wider mb-1 block">${product.category}</span>
+                    <h3 class="text-xl font-bold mb-2 truncate text-gray-800">${product.title}</h3>
+                    <p class="text-gray-500 mb-4 text-sm">Modular, high-speed unit designed for seamless integration.</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-3xl font-extrabold text-gray-900">${formatINR(product.price)}</span>
+                    </div>
+                    
+                    <div class="flex flex-col space-y-2">
+                        <button onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})" class="w-full flex items-center justify-center py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition duration-300 shadow-lg shadow-orange-300/50">
+                            Add to Cart
+                        </button>
+                        <a href="${AMAZON_LINK}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center py-2 text-sm bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition duration-300 border border-gray-300">
+                            <svg class='w-4 h-4 mr-2' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M11.969 2.146c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636zm-.322 13.91l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077zm3.111-3.111l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077z" fill="#FF9900"/>
                             </svg>
-                            Open WhatsApp to Confirm
+                            Buy on Amazon (Verified Seller)
                         </a>
                     </div>
-                )}
-            </div>
-        </div>
-    );
-};
+                </div>
+            `).join('');
+        }
 
-// Cart Drawer Component
-const CartDrawer = ({ cart, isOpen, onClose, onQuantityChange, onRemoveItem, itemCount, onOpenCheckout }) => {
-    
-    // Calculate total price
-    const subtotal = cart.reduce((sum, item) => {
-        const price = cleanPrice(item.price);
-        return sum + (price * item.quantity);
-    }, 0);
+        function renderCartDrawer() {
+            const subtotal = cart.reduce((sum, item) => sum + (cleanPrice(item.price) * item.quantity), 0);
+            const shipping = subtotal >= 5000 ? 0 : 100;
+            const total = subtotal + shipping;
+            const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-    // Shipping: Free over ₹5,000 (adjusted for cheaper prices). Flat rate ₹100 otherwise.
-    const freeShippingThreshold = 5000;
-    const shippingCost = 100;
-    const shipping = subtotal >= freeShippingThreshold ? 0.00 : shippingCost;
-    const total = subtotal + shipping;
-
-    const drawerClass = isOpen ? 'translate-x-0' : 'translate-x-full';
-    
-    return (
-        <>
-            {/* Overlay */}
-            {isOpen && (
-                <div 
-                    className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[60] transition-opacity duration-300"
-                    onClick={onClose}
-                ></div>
-            )}
-
-            {/* Drawer */}
-            <div 
-                className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-2xl z-[70] transition-transform duration-400 ease-out flex flex-col ${drawerClass}`}
-            >
-                {/* Header */}
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h2 className="text-2xl font-extrabold text-gray-800 flex items-center">
-                        <ShoppingCart className="w-6 h-6 mr-2 text-orange-500" />
+            cartDrawer.innerHTML = `
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h2 class="text-2xl font-extrabold text-gray-800 flex items-center">
+                        <i data-lucide="shopping-cart" class="w-6 h-6 mr-2 text-orange-500"></i>
                         Your Cart
                     </h2>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 transition">
-                        <X className="w-6 h-6 text-gray-700" />
+                    <button onclick="closeCartDrawer()" class="p-2 rounded-full hover:bg-gray-200 transition">
+                        <i data-lucide="x" class="w-6 h-6 text-gray-700"></i>
                     </button>
                 </div>
 
-                {/* Cart Items */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {cart.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                            <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                            <p className="text-lg font-semibold">Your cart is empty.</p>
-                            <p className="text-sm">Start adding some robotics components!</p>
+                <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                    ${cart.length === 0 ? `
+                        <div class="text-center py-12 text-gray-500">
+                            <i data-lucide="shopping-cart" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+                            <p class="text-lg font-semibold">Your cart is empty.</p>
+                            <p class="text-sm">Start adding some robotics components!</p>
                         </div>
-                    ) : (
-                        cart.map((item, index) => (
-                            <div key={index} className="flex items-center space-x-4 p-4 border rounded-xl shadow-sm hover:shadow-md transition bg-white">
-                                <img 
-                                    src={item.imgSrc} 
-                                    alt={item.title} 
-                                    className="w-16 h-1- object-cover rounded-lg flex-shrink-0 border"
-                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100x100/eeeeee/333333?text=Product"; }}
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-gray-800 truncate">{item.title}</p>
-                                    <p className="text-sm font-bold text-orange-500">{formatINR(cleanPrice(item.price) * item.quantity)}</p>
-                                    <p className="text-xs text-gray-500">Unit Price: {item.price}</p>
-                                </div>
-
-                                <div className="flex items-center space-x-2 flex-shrink-0">
-                                    <button 
-                                        onClick={() => onQuantityChange(item.title, -1)} 
-                                        className="p-1 rounded-full text-gray-600 hover:bg-gray-200 disabled:opacity-50"
-                                        disabled={item.quantity <= 1}
-                                    >
-                                        <Minus className="w-4 h-4" />
-                                    </button>
-                                    <span className="font-medium text-lg w-6 text-center">{item.quantity}</span>
-                                    <button 
-                                        onClick={() => onQuantityChange(item.title, 1)} 
-                                        className="p-1 rounded-full text-gray-600 hover:bg-gray-200"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                    </button>
-                                    <button 
-                                        onClick={() => onRemoveItem(item.title)} 
-                                        className="p-1 ml-2 rounded-full text-red-500 hover:bg-red-50 transition"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
+                    ` : cart.map(item => `
+                        <div class="flex items-center space-x-4 p-4 border rounded-xl shadow-sm hover:shadow-md transition bg-white">
+                            <img src="${item.imgSrc}" alt="${item.title}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0 border">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-gray-800 truncate">${item.title}</p>
+                                <p class="text-sm font-bold text-orange-500">${formatINR(cleanPrice(item.price) * item.quantity)}</p>
+                                <p class="text-xs text-gray-500">Unit: ${formatINR(cleanPrice(item.price))}</p>
                             </div>
-                        ))
-                    )}
+                            <div class="flex items-center space-x-2 flex-shrink-0">
+                                <button onclick="updateQuantity('${item.title}', -1)" ${item.quantity <= 1 ? 'disabled' : ''} class="p-1 rounded-full text-gray-600 hover:bg-gray-200 ${item.quantity <= 1 ? 'opacity-50' : ''}">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <span class="font-medium text-lg w-6 text-center">${item.quantity}</span>
+                                <button onclick="updateQuantity('${item.title}', 1)" class="p-1 rounded-full text-gray-600 hover:bg-gray-200">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="removeFromCart('${item.title}')" class="p-1 ml-2 rounded-full text-red-500 hover:bg-red-50 transition">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
 
-                {/* Summary & Checkout */}
-                <div className="p-6 border-t border-gray-100 bg-gray-50/70 backdrop-blur-sm">
-                    <div className="space-y-2 mb-4 text-gray-700">
-                        <div className="flex justify-between font-medium">
+                <div class="p-6 border-t border-gray-100 bg-gray-50/70 backdrop-blur-sm">
+                    <div class="space-y-2 mb-4 text-gray-700">
+                        <div class="flex justify-between font-medium">
                             <span>Subtotal:</span>
-                            <span>{formatINR(subtotal)}</span>
+                            <span>${formatINR(subtotal)}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
+                        <div class="flex justify-between text-sm">
                             <span>Shipping:</span>
-                            <span className={shipping === 0 ? 'text-green-600 font-semibold' : ''}>
-                                {shipping === 0 ? 'FREE' : formatINR(shipping)}
+                            <span class="${shipping === 0 ? 'text-green-600 font-semibold' : ''}">
+                                ${shipping === 0 ? 'FREE' : formatINR(shipping)}
                             </span>
                         </div>
-                        <div className="flex justify-between text-xl font-extrabold text-gray-900 pt-2 border-t border-gray-200">
+                        <div class="flex justify-between text-xl font-extrabold text-gray-900 pt-2 border-t border-gray-200">
                             <span>Order Total:</span>
-                            <span>{formatINR(total)}</span>
+                            <span>${formatINR(total)}</span>
                         </div>
                     </div>
-                    <button 
-                        className="w-full flex items-center justify-center py-4 bg-sky-600 text-white rounded-xl font-bold text-lg hover:bg-sky-700 transition duration-300 shadow-xl shadow-sky-300/50 disabled:bg-gray-400"
-                        disabled={cart.length === 0}
-                        onClick={() => onOpenCheckout({ total, itemCount })}
-                    >
+                    <button onclick="openCheckoutModal()" ${cart.length === 0 ? 'disabled' : ''} class="w-full flex items-center justify-center py-4 bg-sky-600 text-white rounded-xl font-bold text-lg hover:bg-sky-700 transition duration-300 shadow-xl shadow-sky-300/50 ${cart.length === 0 ? 'bg-gray-400' : ''}">
                         Checkout & Confirm via WhatsApp
                     </button>
-                    <p className="text-center text-xs text-gray-500 mt-3">Free shipping on orders over {formatINR(freeShippingThreshold)}.</p>
+                    <p class="text-center text-xs text-gray-500 mt-3">
+                        Free shipping on orders over ${formatINR(5000)}.
+                    </p>
                 </div>
-            </div>
-        </>
-    );
-};
-
-// --- Main App Component ---
-const App = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isScrolled, setIsScrolled] = useState(false);
-    
-    // Cart Management
-    const [cart, setCart] = useState([]);
-    const [isAdding, setIsAdding] = useState(false); 
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    
-    // Checkout Management
-    const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
-    const [checkoutDetails, setCheckoutDetails] = useState({ total: 0, itemCount: 0 });
-
-
-    // Calculate total items in cart for the badge
-    const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
-
-    // Function to handle adding a product to the cart
-    const handleAddToCart = (product) => {
-        setIsAdding(true);
-
-        setCart(prevCart => {
-            const existingItem = prevCart.find(item => item.title === product.title);
-            if (existingItem) {
-                return prevCart.map(item =>
-                    item.title === product.title
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item
-                );
-            } else {
-                return [...prevCart, { ...product, quantity: 1 }];
-            }
-        });
-
-        // Open cart after adding the first item for visibility
-        if (itemCount === 0) {
-            setIsCartOpen(true);
+            `;
+            
+            // Re-initialize Lucide icons in the drawer
+            lucide.createIcons();
         }
 
-        setTimeout(() => {
-            setIsAdding(false);
-        }, 1000); 
-    };
-    
-    // Function to handle quantity changes (+1 or -1)
-    const handleQuantityChange = (title, delta) => {
-        setCart(prevCart => prevCart.map(item => 
-            item.title === title
-                ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-                : item
-        ));
-    };
-
-    // Function to remove an item completely
-    const handleRemoveItem = (title) => {
-        setCart(prevCart => prevCart.filter(item => item.title !== title));
-    };
-
-    // Handler to open the checkout modal
-    const handleOpenCheckout = ({ total, itemCount }) => {
-        setCheckoutDetails({ total, itemCount });
-        setIsCartOpen(false); // Close cart drawer
-        setIsCheckoutModalOpen(true); // Open checkout modal
-    }
-
-    // Effect to handle scroll-triggered blur and transparency
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-        };
-    }, []);
-    
-    // Effect to disable body scrolling when cart or modal is open
-    useEffect(() => {
-        const disableScroll = isCartOpen || isCheckoutModalOpen;
-        document.body.style.overflow = disableScroll ? 'hidden' : 'unset';
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isCartOpen, isCheckoutModalOpen]);
-
-
-    // Product data (Cheap prices maintained)
-    const products = [
-        { title: "Quantum Motor Driver Pro", category: "Actuation", price: 4490, imgSrc: "https://placehold.co/400x300/e9d5ff/1e40af?text=Motor+Driver", imgAlt: "Motor Driver", delay: 100 },
-        { title: "Vision-AI Sensor Array", category: "Sensing", price: 12999, imgSrc: "https://placehold.co/400x300/bae6fd/0369a1?text=AI+Vision", imgAlt: "AI Vision Sensor", delay: 200 },
-        { title: "Dev Kit: Arm & Gripper", category: "Kits", price: 8990, imgSrc: "https://placehold.co/400x300/fed7aa/ea580c?text=Robotic+Kit", imgAlt: "Robotic Arm Kit", delay: 300 },
-        { title: "Edge Control Unit v3", category: "Control", price: 5990, imgSrc: "https://placehold.co/400x300/d1d5db/4b5563?text=Control+Unit", imgAlt: "Control Unit", delay: 400 },
-        { title: "Long-Range Lidar Unit", category: "Sensing", price: 15499, imgSrc: "https://placehold.co/400x300/fecaca/dc2626?text=Lidar+Unit", imgAlt: "Lidar Unit", delay: 500 },
-        { title: "Modular Chassis Frame", category: "Kits", price: 6590, imgSrc: "https://placehold.co/400x300/d1fae5/065f46?text=Chassis+Frame", imgAlt: "Chassis Frame", delay: 600 },
-        { title: "High-Speed DC Motor", category: "Actuation", price: 1890, imgSrc: "https://placehold.co/400x300/fff7ed/7c2d12?text=DC+Motor", imgAlt: "DC Motor", delay: 700 },
-        { title: "12V Power Regulator", category: "Control", price: 2990, imgSrc: "https://placehold.co/400x300/e0f2f1/0f766e?text=Power+Regulator", imgAlt: "Power Regulator", delay: 800 },
-    ];
-    
-    // Logic to count total products (3 products + 5 new products = 8 products)
-    const totalProducts = products.length;
-
-
-    return (
-        <div className="min-h-screen relative overflow-x-hidden">
-            <style>{globalStyles}</style>
-            
-            {/* New Three.js Dynamic Background */}
-            {THREE && <ThreeDBackground />}
-
-            {/* Floating Toast Message */}
-            {isAdding && <AddingToCartToast />}
-            
-            {/* Cart Drawer Component */}
-            <CartDrawer 
-                cart={cart}
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                onQuantityChange={handleQuantityChange}
-                onRemoveItem={handleRemoveItem}
-                itemCount={itemCount}
-                onOpenCheckout={handleOpenCheckout}
-            />
-
-            {/* Checkout Modal Component */}
-            <CheckoutModal
-                isOpen={isCheckoutModalOpen}
-                onClose={() => setIsCheckoutModalOpen(false)}
-                cart={cart}
-                total={checkoutDetails.total}
-                itemCount={checkoutDetails.itemCount}
-            />
-
-            {/* Navigation Bar (with conditional scroll class) */}
-            <header className={`sticky top-0 bg-white bg-opacity-95 backdrop-blur-sm shadow-lg z-50 transition-all duration-300 ${isScrolled ? 'header-scrolled' : ''}`}>
-                <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-20">
-                        <div className="flex-shrink-0">
-                            <a href="#" className="text-3xl font-extrabold tracking-tight">
-                                <span className="text-gray-900">Robo</span>
-                                <span className="half-color-t">T</span>
-                                <span className="text-sky-500">echnique</span>
-                            </a>
-                        </div>
-                        <div className="flex items-center space-x-6">
-                            <div className="hidden md:flex space-x-8">
-                                {['Home', 'Shop', 'Brand', 'Contact'].map(item => (
-                                    <a key={item} href={`#${item.toLowerCase()}`} className="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">
-                                        {item}
-                                    </a>
-                                ))}
+        function renderCheckoutModal(total, itemCount) {
+            checkoutModal.innerHTML = `
+                <div class="bg-white rounded-2xl w-full max-w-md m-4 shadow-3xl p-6 sm:p-8 transform transition-all duration-300 scale-100">
+                    <div class="flex justify-between items-center border-b pb-4 mb-6">
+                        <h3 class="text-2xl font-extrabold text-gray-900" id="checkout-title">
+                            Enter Phone Number
+                        </h3>
+                        <button onclick="closeCheckoutModal()" class="p-2 rounded-full hover:bg-gray-100 transition">
+                            <i data-lucide="x" class="w-6 h-6 text-gray-600"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="checkout-step-1">
+                        <div class='space-y-6'>
+                            <div class="flex items-center space-x-3 p-3 bg-sky-50 border-l-4 border-sky-400 rounded-lg">
+                                <i data-lucide="phone" class='w-5 h-5 text-sky-600'></i>
+                                <p class="text-sm text-gray-700 font-medium">
+                                    We use WhatsApp for final confirmation and secure payment link.
+                                </p>
                             </div>
-                            
-                            {/* Cart button now opens the drawer */}
-                            <button 
-                                onClick={() => setIsCartOpen(true)}
-                                className="relative p-2 rounded-full text-gray-600 hover:text-orange-500 transition duration-200"
-                            >
-                                <ShoppingCart className="h-7 w-7" />
-                                {itemCount > 0 && (
-                                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-orange-500 rounded-full">
-                                        {itemCount}
-                                    </span>
-                                )}
-                            </button>
 
-                            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden p-2 rounded-md text-gray-600 hover:text-orange-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-500">
-                                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                            <div>
+                                <label for="phone-input" class="block text-sm font-medium text-gray-700 mb-1">Mobile Number (10 digits)</label>
+                                <div class="mt-1 flex rounded-lg shadow-sm">
+                                    <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm font-semibold">+91</span>
+                                    <input
+                                        type="tel"
+                                        id="phone-input"
+                                        maxlength="10"
+                                        class="flex-1 block w-full px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-orange-500 focus:border-orange-500 transition duration-150"
+                                        placeholder="e.g., 9876543210"
+                                    >
+                                </div>
+                                <p id="phone-error" class="mt-2 text-sm text-red-600 hidden"></p>
+                            </div>
+
+                            <button onclick="proceedToWhatsApp()" class="w-full flex items-center justify-center py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition duration-300 shadow-lg shadow-orange-300/50">
+                                Confirm Details & Proceed to WhatsApp
+                                <i data-lucide="arrow-right" class='w-5 h-5 ml-2'></i>
                             </button>
                         </div>
                     </div>
-                </nav>
-                
-                {/* Mobile Menu */}
-                <div id="mobile-menu" className={`md:hidden absolute w-full bg-white shadow-xl transition-all duration-300 ${isMenuOpen ? 'h-auto opacity-100' : 'h-0 opacity-0 overflow-hidden'}`}>
-                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                        {['Home', 'Shop', 'Brand', 'Contact'].map(item => (
-                            <a key={item} href={`#${item.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-sky-50 hover:text-sky-600">
-                                {item}
-                            </a>
-                        ))}
-                    </div>
                 </div>
-            </header>
+            `;
+            
+            lucide.createIcons();
+        }
 
-            {/* MAIN CONTENT */}
-            <main className="relative z-10 full-page-content">
-                {/* 1. Hero Section */}
-                <section id="home" className="pt-24 pb-32 sm:pt-32 sm:pb-48 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <AnimatedSection>
-                        <p className="text-base font-semibold text-orange-600 mb-3 tracking-wide uppercase">The Future Is Modular</p>
-                        <h1 className="text-6xl sm:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6 text-gray-900 leading-tight">
-                            Premium Robotics & <span className="text-sky-600">IoT Components</span>
-                        </h1>
-                        <p className="text-xl sm:text-2xl text-gray-600 max-w-4xl mx-auto mb-10">
-                            Engineered for precision and built for the next generation of automation projects.
-                        </p>
-                        <a href="#shop" className="inline-flex justify-center items-center px-10 py-4 border border-transparent text-lg font-bold rounded-full shadow-2xl text-white bg-orange-500 hover:bg-orange-600 transition duration-300 transform hover:scale-105 ring-4 ring-orange-500/30">
-                            Shop The Collection
-                            <ArrowRight className="w-5 h-5 ml-2" />
-                        </a>
-                    </AnimatedSection>
-                </section>
+        function proceedToWhatsApp() {
+            const phoneInput = document.getElementById('phone-input');
+            const phoneError = document.getElementById('phone-error');
+            const phone = phoneInput.value.replace(/\D/g, '');
+            
+            if (phone.length !== 10) {
+                phoneError.textContent = 'Please enter a valid 10-digit Indian phone number.';
+                phoneError.classList.remove('hidden');
+                return;
+            }
+            
+            phoneError.classList.add('hidden');
+            
+            let message = `*RoboTechnique Order Confirmation*\n\n`;
+            message += `*Order Total:* ${formatINR(checkoutDetails.total)}\n`;
+            message += `*Contact:* +91 ${phone}\n\n`;
+            message += `*Items (${checkoutDetails.itemCount}):*\n`;
+            
+            cart.forEach((item, index) => {
+                const itemPrice = cleanPrice(item.price);
+                message += `${index + 1}. ${item.title} (Qty: ${item.quantity}, Price: ${formatINR(itemPrice * item.quantity)})\n`;
+            });
+            
+            message += `\n*Please confirm this order and receive payment details via this chat.*`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+            
+            window.open(whatsappURL, '_blank');
+            closeCheckoutModal();
+            closeCartDrawer();
+            cart = [];
+            updateCartCount();
+        }
+
+        // Animation and Scroll Effects
+        function initScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('scroll-visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.scroll-fade-in').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function initScrollHeader() {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('header-scrolled');
+                } else {
+                    header.classList.remove('header-scrolled');
+                }
+            });
+        }
+
+        // Three.js Background
+        function initThreeBackground() {
+            const mount = document.getElementById('three-background');
+            if (!mount || !window.THREE) return;
+
+            try {
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, mount.clientWidth / mount.clientHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 
-                {/* 2. About/Brand Section */}
-                <section id="brand" className="py-20 sm:py-32">
-                    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="lg:flex lg:space-x-12">
-                            <div className="lg:w-1/2">
-                                <AnimatedSection delay={100}>
-                                    <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-800 mb-6 leading-snug">
-                                        Crafting the <span className="text-sky-600">Foundation</span> of Automation
-                                    </h2>
-                                </AnimatedSection>
-                            </div>
-                            <div className="lg:w-1/2 mt-8 lg:mt-0 space-y-8">
-                                <AnimatedSection delay={200}>
-                                    <div className="flex items-start space-x-4">
-                                        <TrendingUp className="w-8 h-8 text-orange-500 flex-shrink-0 mt-1" />
-                                        <div>
-                                            <h3 className="text-xl font-bold text-gray-800">Uncompromising Quality</h3>
-                                            <p className="mt-1 text-gray-600">Every component is tested under extreme conditions to ensure reliability, longevity, and superior performance in high-stakes deployments.</p>
-                                        </div>
-                                    </div>
-                                </AnimatedSection>
-                                <AnimatedSection delay={300}>
-                                    <div className="flex items-start space-x-4">
-                                        <Zap className="w-8 h-8 text-orange-500 flex-shrink-0 mt-1" />
-                                        <div>
-                                            <h3 className="text-xl font-bold text-gray-800">Seamless Integration</h3>
-                                            <p className="mt-1 text-gray-600">Our hardware is designed for open standards, ensuring plug-and-play compatibility with popular platforms like ROS, Arduino, and industrial PLCs.</p>
-                                        </div>
-                                    </div>
-                                </AnimatedSection>
-                                <AnimatedSection delay={400}>
-                                    <div className="flex items-start space-x-4">
-                                        <Atom className="w-8 h-8 text-orange-500 flex-shrink-0 mt-1" />
-                                        <div>
-                                            <h3 className="text-xl font-bold text-gray-800">Future-Proofed Technology</h3>
-                                            <p className="mt-1 text-gray-600">We incorporate the latest in Edge AI and decentralized control, preparing your projects for the next decade of development.</p>
-                                        </div>
-                                    </div>
-                                </AnimatedSection>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                renderer.setSize(mount.clientWidth, mount.clientHeight);
+                renderer.setClearColor(0xffffff, 0);
+                mount.appendChild(renderer.domElement);
+                
+                camera.position.z = 20;
 
+                // Create simple particles
+                const particles = new THREE.BufferGeometry();
+                const particleCount = 100;
+                const posArray = new Float32Array(particleCount * 3);
 
-                {/* 3. Product Showcase Section */}
-                <section id="shop" className="py-20 sm:py-32 bg-white shadow-2xl rounded-t-[40px] mt-12 border-t-8 border-sky-100">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <AnimatedSection>
-                            <h2 className="text-4xl font-extrabold text-center mb-4 text-gray-800">Our Core Product Line</h2>
-                            <p className="text-center text-xl text-gray-500 mb-16 max-w-3xl mx-auto">
-                                The essential components driving innovation in robotics and complex systems worldwide.
-                            </p>
-                        </AnimatedSection>
+                for (let i = 0; i < particleCount * 3; i++) {
+                    posArray[i] = (Math.random() - 0.5) * 50;
+                }
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {products.map((product) => (
-                                <ProductCard 
-                                    key={product.title} 
-                                    {...product} 
-                                    price={formatINR(product.price)} // Format price here
-                                    productData={{ ...product, price: formatINR(product.price) }} // Pass formatted price to cart handler
-                                    onAddToCart={handleAddToCart}
-                                />
-                            ))}
-                        </div>
-                        
-                        <AnimatedSection delay={500}>
-                            <div className="text-center mt-16">
-                                {/* FIX: Correctly displays the total number of products */}
-                                <a href="#shop" className="inline-flex justify-center items-center px-8 py-3 border border-sky-500 text-base font-bold rounded-full shadow-lg text-sky-600 bg-white hover:bg-sky-50 transition duration-300 transform hover:scale-105">
-                                    Browse All Categories ({totalProducts} Products)
-                                </a>
-                            </div>
-                        </AnimatedSection>
-                    </div>
-                </section>
+                particles.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+                const particleMaterial = new THREE.PointsMaterial({
+                    size: 0.1,
+                    color: 0x87CEEB
+                });
 
-                {/* 4. Contact Form */}
-                <section id="contact" className="py-20 sm:py-32">
-                    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <AnimatedSection>
-                            <h2 className="text-4xl font-extrabold text-center mb-4 text-gray-800">Get In Touch</h2>
-                            <p className="text-center text-xl text-gray-500 mb-12 max-w-3xl mx-auto">
-                                Need technical specifications or partnership details? Our team is ready to assist.
-                            </p>
-                        </AnimatedSection>
-                        
-                        <AnimatedSection delay={200}>
-                            <div className="max-w-xl mx-auto bg-white p-8 sm:p-10 rounded-2xl shadow-2xl border border-gray-100">
-                                <form action="#" method="POST" className="space-y-6">
-                                    <div>
-                                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                                        <input type="text" name="name" id="name" required className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-inner focus:ring-sky-500 focus:border-sky-500 transition duration-150" />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Work Email</label>
-                                        <input type="email" name="email" id="email" required className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-inner focus:ring-sky-500 focus:border-sky-500 transition duration-150" />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="message" className="block text-sm font-medium text-gray-700">Project Inquiry</label>
-                                        <textarea id="message" name="message" rows="4" required className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-inner focus:ring-sky-500 focus:border-sky-500 transition duration-150 resize-none"></textarea>
-                                    </div>
-                                    <div>
-                                        <button type="submit" className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-base font-bold text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition duration-150 transform hover:scale-[1.01]">
-                                            Send Request
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </AnimatedSection>
-                    </div>
-                </section>
-            </main>
+                const particleSystem = new THREE.Points(particles, particleMaterial);
+                scene.add(particleSystem);
 
-            {/* SCROLLABLE FOOTER */}
-            <footer className="w-full bg-gray-900/90 backdrop-blur-md text-gray-400 py-10 mt-12 border-t border-gray-800 relative z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    {/* RoboTechnique */}
-                    <p className="text-xl font-extrabold tracking-tight mb-1">
-                        <span className="text-gray-100">Robo</span>
-                        <span className="half-color-t-dark">T</span>
-                        <span className="text-sky-400">echnique</span>
-                    </p>
-                    {/* Engineered for the future of machines. */}
-                    <p className='text-sm mb-3'>Engineered for the future of machines.</p>
-                    
-                    {/* Terms|Privacy|Careers */}
-                    <div className="space-x-4 mb-2 text-sm">
-                        <a href="#" className="hover:text-white transition duration-150">Terms</a>
-                        <span className="text-gray-600">|</span>
-                        <a href="#" className="hover:text-white transition duration-150">Privacy</a>
-                        <span className="text-gray-600">|</span>
-                        <a href="#" className="hover:text-white transition duration-150">Careers</a>
-                    </div>
-                    
-                    {/* © 2025 RoboTechnique. All rights reserved. */}
-                    <p className="mt-2 text-xs">&copy; 2025 RoboTechnique. All rights reserved.</p>
-                </div>
-            </footer>
+                function animate() {
+                    requestAnimationFrame(animate);
+                    particleSystem.rotation.y += 0.001;
+                    particleSystem.rotation.x += 0.0005;
+                    renderer.render(scene, camera);
+                }
 
-        </div>
-    );
-};
+                animate();
 
-export default App;
+                // Handle resize
+                window.addEventListener('resize', () => {
+                    camera.aspect = mount.clientWidth / mount.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(mount.clientWidth, mount.clientHeight);
+                });
+
+            } catch (error) {
+                console.warn('Three.js background failed to initialize:', error);
+            }
+        }
+
+        // Event Listeners
+        function initEventListeners() {
+            // Cart button
+            cartButton.addEventListener('click', openCartDrawer);
+            
+            // Mobile menu
+            mobileMenuButton.addEventListener('click', () => {
+                const isOpen = mobileMenu.classList.contains('h-0');
+                if (isOpen) {
+                    mobileMenu.classList.remove('h-0', 'opacity-0');
+                    mobileMenu.classList.add('h-auto', 'opacity-100');
+                    mobileMenuButton.innerHTML = '<i data-lucide="x" class="h-6 w-6"></i>';
+                } else {
+                    mobileMenu.classList.add('h-0', 'opacity-0');
+                    mobileMenu.classList.remove('h-auto', 'opacity-100');
+                    mobileMenuButton.innerHTML = '<i data-lucide="menu" class="h-6 w-6"></i>';
+                }
+                lucide.createIcons();
+            });
+
+            // Close cart when clicking overlay
+            cartDrawer.addEventListener('click', (e) => {
+                if (e.target === cartDrawer) {
+                    closeCartDrawer();
+                }
+            });
+
+            // Close modal when clicking overlay
+            checkoutModal.addEventListener('click', (e) => {
+                if (e.target === checkoutModal) {
+                    closeCheckoutModal();
+                }
+            });
+        }
+
+        // Global variables for checkout
+        let checkoutDetails = { total: 0, itemCount: 0 };
+
+        function openCheckoutModal() {
+            const subtotal = cart.reduce((sum, item) => sum + (cleanPrice(item.price) * item.quantity), 0);
+            const shipping = subtotal >= 5000 ? 0 : 100;
+            const total = subtotal + shipping;
+            const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+            
+            checkoutDetails = { total, itemCount };
+            renderCheckoutModal();
+            checkoutModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Lucide icons
+            lucide.createIcons();
+            
+            // Render products
+            renderProducts();
+            
+            // Initialize animations and effects
+            initScrollAnimations();
+            initScrollHeader();
+            initEventListeners();
+            
+            // Initialize Three.js background
+            setTimeout(initThreeBackground, 100);
+            
+            // Update product count
+            document.getElementById('product-count').textContent = products.length;
+        });
+
+        // Make functions globally available
+        window.addToCart = addToCart;
+        window.updateQuantity = updateQuantity;
+        window.removeFromCart = removeFromCart;
+        window.openCartDrawer = openCartDrawer;
+        window.closeCartDrawer = closeCartDrawer;
+        window.openCheckoutModal = openCheckoutModal;
+        window.closeCheckoutModal = closeCheckoutModal;
+        window.proceedToWhatsApp = proceedToWhatsApp;
+    </script>
+</body>
+</html>
