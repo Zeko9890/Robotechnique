@@ -779,9 +779,7 @@
                     </div>
                     <div class="flex justify-between text-sm">
                         <span>Shipping:</span>
-                        <span class="${shipping === 0 ? 'text-green-600 font-semibold' : ''}">
-                            ${shipping === 0 ? 'FREE' : formatINR(shipping)}
-                        </span>
+                        <span class="text-gray-700 font-medium">On WhatsApp</span>
                     </div>
                     <div class="flex justify-between text-xl font-extrabold text-gray-900 pt-2 border-t border-gray-200">
                         <span>Order Total:</span>
@@ -791,9 +789,7 @@
                 <button onclick="openCheckoutModal()" ${cart.length === 0 ? 'disabled' : ''} class="w-full flex items-center justify-center py-4 bg-sky-600 text-white rounded-xl font-bold text-lg hover:bg-sky-700 transition duration-300 shadow-xl shadow-sky-300/50 ${cart.length === 0 ? 'bg-gray-400' : ''}">
                     Checkout & Confirm via WhatsApp
                 </button>
-                <p class="text-center text-xs text-gray-500 mt-3">
-                    Free shipping on orders over ${formatINR(5000)}.
-                </p>
+            
             </div>
         `;
         
