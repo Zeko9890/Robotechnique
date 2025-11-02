@@ -29,15 +29,32 @@
     z-index: 10 !important;
   }
   /* ✨ Smooth Toast Animation */
- #toast {
-  opacity: 0;
-  transform: translateY(-20px);
-  transition: all 0.4s ease;
+  #toast {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.4s ease;
   }
 
- #toast.show {
-  opacity: 1;
-  transform: translateY(0);
+  #toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+ /* 🧱 Fix cart drawer layering */
+  #cart-drawer {
+    z-index: 9999 !important;
+    background-color: white;
+  }
+
+  /* 🧱 Fix checkout modal layering */
+  #checkout-modal {
+    z-index: 10000 !important;
+  }
+
+  /* 🧱 Prevent main background interference when drawer is open */
+  body.drawer-open main {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
   }
 </style>
 
@@ -548,13 +565,17 @@
 
         function openCartDrawer() {
             renderCartDrawer();
-            cartDrawer.classList.remove('translate-x-full');
-            document.body.style.overflow = 'hidden';
+            const drawer = document.getElementById("cart-drawer");
+            drawer.classList.remove("translate-x-full");
+            document.body.classList.add("drawer-open");
+            document.body.style.overflow = "hidden";
         }
 
         function closeCartDrawer() {
-            cartDrawer.classList.add('translate-x-full');
-            document.body.style.overflow = 'unset';
+            const drawer = document.getElementById("cart-drawer");
+            drawer.classList.add("translate-x-full");
+            document.body.classList.remove("drawer-open");
+            document.body.style.overflow = "unset";
         }
 
         function openCheckoutModal() {
