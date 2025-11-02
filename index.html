@@ -803,38 +803,37 @@
 }
 
     function proceedToWhatsApp() {
-        const phoneInput = document.getElementById('phone-input');
-        const phoneError = document.getElementById('phone-error');
-        const phone = phoneInput.value.replace(/\D/g, '');
-        
-        if (phone.length !== 10) {
-            phoneError.textContent = 'Please enter a valid 10-digit Indian phone number.';
-            phoneError.classList.remove('hidden');
-            return;
-        }
-        
-        phoneError.classList.add('hidden');
-        
-        let message = `*RoboTechnique Order Confirmation*\n\n`;
-        message += `*Order Total:* ${formatINR(checkoutDetails.total)}\n`;
-        message += `*Contact:* +91 ${phone}\n\n`;
-        message += `*Items (${checkoutDetails.itemCount}):*\n`;
-        
-        cart.forEach((item, index) => {
-            const itemPrice = cleanPrice(item.price);
-            message += `${index + 1}. ${item.title} (Qty: ${item.quantity}, Price: ${formatINR(itemPrice * item.quantity)})\n`;
-        });
-        
-        message += `\n*Please confirm this order and receive payment details via this chat.*`;
+      if (cart.length === 0) return;
 
-        const encodedMessage = encodeURIComponent(message);
-        const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-        
-        window.open(whatsappURL, '_blank');
-        closeCheckoutModal();
-        closeCartDrawer();
-        cart = [];
-        updateCartCount();
+      const phoneInput = document.getElementById("phone-input");
+      const userPhone = phoneInput ? phoneInput.value.trim() : "";
+
+     // Collect order details
+      const itemsText = cart
+        .map(
+          (item, index) =>
+            `${index + 1}. ${item.title} × ${item.quantity} = ₹${cleanPrice(
+              item.price
+            ) * item.quantity}`
+        )
+        .join("%0A"); // Line breaks for WhatsApp message
+
+      const subtotal = cart.reduce(
+        (sum, item) => sum + cleanPrice(item.price) * item.quantity,
+        0
+      );
+
+     // Change shipping to "On WhatsApp"
+     const message = `*🛒 New Order from RoboTechnique Store*%0A%0A${itemsText}%0A%0A💰 *Subtotal:* ₹${subtotal}%0A🚚 *Delivery Charges:* On WhatsApp%0A📦 *Total:* ₹${subtotal}%0A%0A📱 *Customer Number:* ${
+       userPhone || "Not provided"
+     }`;
+
+     // Admin WhatsApp number
+     const adminNumber = "919718335330"; // include country code, no + symbol
+     const whatsappURL = `https://wa.me/${adminNumber}?text=${message}`;
+
+     // Redirect
+     window.open(whatsappURL, "_blank");
     }
 
     // Animation and Scroll Effects
