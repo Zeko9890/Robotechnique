@@ -4,21 +4,31 @@
     <!-- Tailwind CSS CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Fix header visibility over 3D background -->
     <style>
-      #header {
-        position: relative;
-        z-index: 50; /* Keeps header above 3D background */
-      }
+  /* Make sure the 3D background stays behind everything */
+  canvas, #threejs-bg, #three-background {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    z-index: 0 !important;
+  }
 
-      #header img,
-      #header span,
-      #header a {
-        position: relative;
-        z-index: 51; /* Ensures logo and text stay on top */
-        opacity: 1 !important; /* Full visibility */
-      }
-    </style>
+  /* Keep navbar and header above 3D background */
+  #header {
+    position: relative;
+    z-index: 50 !important;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Make sure everything inside header is visible */
+  #header * {
+    opacity: 1 !important;
+    color: inherit !important;
+    z-index: 51 !important;
+  }
+</style>
+
 <!-- Google Font (Inter) -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
