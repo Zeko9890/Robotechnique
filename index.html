@@ -688,10 +688,44 @@
         const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
         
         checkoutDetails = { total, itemCount };
-        renderCheckoutModal();
-        checkoutModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
+       
+function renderCheckoutModal() {
+    const subtotal = cart.reduce((sum, item) => sum + (cleanPrice(item.price) * item.quantity), 0);
+    const total = subtotal;
+    
+    checkoutModal.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-96 max-w-sm mx-4 relative">
+            <button onclick="closeCheckoutModal()" class="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition">
+                <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+            </button>
+            <h2 class="text-2xl font-bold mb-2 text-gray-800">Confirm Order</h2>
+            <p class="text-gray-600 mb-4">You'll be redirected to WhatsApp to complete your order.</p>
+            
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <div class="flex justify-between text-sm mb-2">
+                    <span>Items:</span>
+                    <span>${cart.reduce((total, item) => total + item.quantity, 0)}</span>
+                </div>
+                <div class="flex justify-between font-semibold">
+                    <span>Total Amount:</span>
+                    <span>${formatINR(total)}</span>
+                </div>
+            </div>
+            
+            <button onclick="proceedToWhatsApp()" 
+                class="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition duration-300 shadow-lg">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                Continue to WhatsApp
+            </button>
+            
+            <p class="text-xs text-gray-500 text-center mt-3">
+                You'll confirm shipping & payment details on WhatsApp
+            </p>
+        </div>
+    `;
+    
+    lucide.createIcons();
+}
 
     function closeCheckoutModal() {
         checkoutModal.classList.add('hidden');
@@ -802,39 +836,36 @@
     lucide.createIcons();
 }
 
-    function proceedToWhatsApp() {
-      if (cart.length === 0) return;
+function proceedToWhatsApp() {
+    if (cart.length === 0) return;
 
-      // Collect order details
-      const itemsText = cart
-          .map(
-              (item, index) =>
-                  `${index + 1}. ${item.title} × ${item.quantity} = ₹${cleanPrice(item.price) * item.quantity}`
-          )
-          .join('%0A'); // Line breaks for WhatsApp
+    // Collect order details
+    const itemsText = cart
+        .map(
+            (item, index) =>
+                `${index + 1}. ${item.title} × ${item.quantity} = ₹${cleanPrice(item.price) * item.quantity}`
+        )
+        .join('%0A');
 
-      const subtotal = cart.reduce(
-          (sum, item) => sum + cleanPrice(item.price) * item.quantity,
-          0
-      );
+    const subtotal = cart.reduce(
+        (sum, item) => sum + cleanPrice(item.price) * item.quantity,
+        0
+    );
 
-      // Create the message for customer to send to you
-      const message = `*🛒 Order Request - RoboTechnique*%0A%0AHello! I would like to order:%0A%0A${itemsText}%0A%0A💰 *Subtotal:* ₹${subtotal}%0A📦 *Total:* ₹${subtotal}%0A%0APlease confirm availability and provide payment details.`;
+    const message = `*🛒 Order Request - RoboTechnique*%0A%0AHello! I would like to order:%0A%0A${itemsText}%0A%0A💰 *Subtotal:* ₹${subtotal}%0A📦 *Total:* ₹${subtotal}%0A%0APlease confirm availability and provide payment details.`;
 
-      // Customer sends message to YOUR business number
-      const businessNumber = "919718335330"; // Your WhatsApp business number
-      const whatsappURL = `https://wa.me/${businessNumber}?text=${message}`;
+    const businessNumber = "919718335330";
+    const whatsappURL = `https://wa.me/${businessNumber}?text=${message}`;
 
-      // Open WhatsApp for customer
-      window.open(whatsappURL, '_blank');
+    window.open(whatsappURL, '_blank');
     
-      // Optional: Clear cart after order
-      setTimeout(() => {
-          cart = [];
-          updateCartCount();
-          renderCartDrawer();
-          closeCheckoutModal();
-    }, 2000);
+    // Clear cart after order
+    setTimeout(() => {
+        cart = [];
+        updateCartCount();
+        renderCartDrawer();
+        closeCheckoutModal();
+    }, 1000);
 }
 
     // Animation and Scroll Effects
