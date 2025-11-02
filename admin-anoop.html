@@ -26,8 +26,27 @@
             // ADMIN PASSWORD - Change this to your secure password
             const ADMIN_PASSWORD = 'RoboAnoop2025';
 
-            // Initial product data
-            const [products, setProducts] = useState([
+            // Load initial data from localStorage or use defaults
+            const loadInitialData = () => {
+                try {
+                    const savedData = localStorage.getItem('robotechniqueData');
+                    if (savedData) {
+                        const data = JSON.parse(savedData);
+                        return {
+                            products: data.products || getDefaultProducts(),
+                            settings: data.settings || getDefaultSettings()
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
+                }
+                return {
+                    products: getDefaultProducts(),
+                    settings: getDefaultSettings()
+                };
+            };
+
+            const getDefaultProducts = () => [
                 { 
                     id: 1,
                     title: "Quantum Motor Driver Pro", 
@@ -64,13 +83,22 @@
                     imgSrc: "https://placehold.co/400x300/d1d5db/4b5563?text=Control+Unit", 
                     imgAlt: "Control Unit"
                 }
-            ]);
+            ];
 
-            // Site settings
-            const [freeShippingThreshold, setFreeShippingThreshold] = useState(5000);
-            const [shippingCost, setShippingCost] = useState(100);
-            const [whatsappNumber, setWhatsappNumber] = useState('919718335330');
-            const [amazonLink, setAmazonLink] = useState('https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb');
+            const getDefaultSettings = () => ({
+                freeShippingThreshold: 5000,
+                shippingCost: 100,
+                whatsappNumber: '919718335330',
+                amazonLink: 'https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb'
+            });
+
+            const initialData = loadInitialData();
+            
+            const [products, setProducts] = useState(initialData.products);
+            const [freeShippingThreshold, setFreeShippingThreshold] = useState(initialData.settings.freeShippingThreshold);
+            const [shippingCost, setShippingCost] = useState(initialData.settings.shippingCost);
+            const [whatsappNumber, setWhatsappNumber] = useState(initialData.settings.whatsappNumber);
+            const [amazonLink, setAmazonLink] = useState(initialData.settings.amazonLink);
 
             const [activeTab, setActiveTab] = useState('products');
             const [savedNotification, setSavedNotification] = useState(false);
@@ -162,15 +190,23 @@
 
             const saveChanges = () => {
                 setSavedNotification(true);
-                console.log('Saved Data:', {
+                
+                // Save to localStorage for main website to use
+                const dataToSave = {
                     products,
                     settings: {
                         freeShippingThreshold,
                         shippingCost,
                         whatsappNumber,
                         amazonLink
-                    }
-                });
+                    },
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                // Save to localStorage (for immediate use by main website)
+                localStorage.setItem('robotechniqueData', JSON.stringify(dataToSave));
+                
+                console.log('Data saved to localStorage:', dataToSave);
                 setTimeout(() => setSavedNotification(false), 3000);
             };
 
@@ -190,6 +226,18 @@
                 link.href = url;
                 link.download = 'robotechnique-data.json';
                 link.click();
+            };
+
+            const resetToDefaults = () => {
+                if (window.confirm('Are you sure you want to reset all data to defaults? This cannot be undone.')) {
+                    setProducts(getDefaultProducts());
+                    const defaultSettings = getDefaultSettings();
+                    setFreeShippingThreshold(defaultSettings.freeShippingThreshold);
+                    setShippingCost(defaultSettings.shippingCost);
+                    setWhatsappNumber(defaultSettings.whatsappNumber);
+                    setAmazonLink(defaultSettings.amazonLink);
+                    localStorage.removeItem('robotechniqueData');
+                }
             };
 
             // LOGIN SCREEN
@@ -284,6 +332,10 @@
                             ),
                             React.createElement('div', { className: "flex gap-3" },
                                 React.createElement('button', {
+                                    onClick: resetToDefaults,
+                                    className: "bg-yellow-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-yellow-600 transition font-semibold shadow-md"
+                                }, "Reset Defaults"),
+                                React.createElement('button', {
                                     onClick: exportData,
                                     className: "bg-white text-sky-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-sky-50 transition font-semibold shadow-md"
                                 }, "Export Data"),
@@ -311,7 +363,7 @@
                     className: "fixed top-24 right-4 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 animate-pulse"
                 },
                     React.createElement('i', { 'data-lucide': 'check', className: "w-5 h-5" }),
-                    React.createElement('span', { className: "font-bold" }, "Changes saved successfully!")
+                    React.createElement('span', { className: "font-bold" }, "Changes saved successfully! Main website updated.")
                 ),
 
                 React.createElement('div', { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" },
@@ -411,117 +463,119 @@
                             },
                                 products.filter(p => p.id === editingProduct).map(product => 
                                     React.createElement(React.Fragment, { key: product.id },
-                                        // Image Section
-                                        React.createElement('div', null,
-                                            React.createElement('label', {
-                                                className: "block text-sm font-bold text-gray-700 mb-2"
-                                            }, "Product Image"),
-                                            React.createElement('div', { className: "relative group" },
-                                                React.createElement('img', {
-                                                    src: product.imgSrc,
-                                                    alt: product.imgAlt,
-                                                    className: "w-full h-40 object-cover rounded-lg border-2 border-gray-200"
-                                                }),
+                                        React.createElement('div', { className: "grid md:grid-cols-4 gap-6" },
+                                            // Image Section
+                                            React.createElement('div', null,
                                                 React.createElement('label', {
-                                                    className: "absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg cursor-pointer opacity-0 group-hover:opacity-100 transition"
-                                                },
-                                                    React.createElement('div', { className: "text-white text-center" },
-                                                        React.createElement('i', { 'data-lucide': 'upload', className: "w-8 h-8 mx-auto mb-2" }),
-                                                        React.createElement('span', { className: "text-sm font-semibold" }, "Upload New")
-                                                    ),
-                                                    React.createElement('input', {
-                                                        type: "file",
-                                                        accept: "image/*",
-                                                        onChange: (e) => handleImageUpload(product.id, e),
-                                                        className: "hidden"
-                                                    })
-                                                )
-                                            )
-                                        ),
-
-                                        // Details Section
-                                        React.createElement('div', { className: "md:col-span-3" },
-                                            React.createElement('div', { className: "grid md:grid-cols-2 gap-4 mb-4" },
-                                                React.createElement('div', null,
+                                                    className: "block text-sm font-bold text-gray-700 mb-2"
+                                                }, "Product Image"),
+                                                React.createElement('div', { className: "relative group" },
+                                                    React.createElement('img', {
+                                                        src: product.imgSrc,
+                                                        alt: product.imgAlt,
+                                                        className: "w-full h-40 object-cover rounded-lg border-2 border-gray-200"
+                                                    }),
                                                     React.createElement('label', {
-                                                        className: "block text-sm font-bold text-gray-700 mb-1"
-                                                    }, "Product Name"),
-                                                    React.createElement('input', {
-                                                        type: "text",
-                                                        value: product.title,
-                                                        onChange: (e) => updateProduct(product.id, 'title', e.target.value),
-                                                        className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
-                                                    })
-                                                ),
-
-                                                React.createElement('div', null,
-                                                    React.createElement('label', {
-                                                        className: "block text-sm font-bold text-gray-700 mb-1"
-                                                    }, "Category"),
-                                                    React.createElement('select', {
-                                                        value: product.category,
-                                                        onChange: (e) => updateProduct(product.id, 'category', e.target.value),
-                                                        className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                                        className: "absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg cursor-pointer opacity-0 group-hover:opacity-100 transition"
                                                     },
-                                                        categories.map(cat => 
-                                                            React.createElement('option', { key: cat, value: cat }, cat)
+                                                        React.createElement('div', { className: "text-white text-center" },
+                                                            React.createElement('i', { 'data-lucide': 'upload', className: "w-8 h-8 mx-auto mb-2" }),
+                                                            React.createElement('span', { className: "text-sm font-semibold" }, "Upload New")
+                                                        ),
+                                                        React.createElement('input', {
+                                                            type: "file",
+                                                            accept: "image/*",
+                                                            onChange: (e) => handleImageUpload(product.id, e),
+                                                            className: "hidden"
+                                                        })
+                                                    )
+                                                )
+                                            ),
+
+                                            // Details Section
+                                            React.createElement('div', { className: "md:col-span-3" },
+                                                React.createElement('div', { className: "grid md:grid-cols-2 gap-4 mb-4" },
+                                                    React.createElement('div', null,
+                                                        React.createElement('label', {
+                                                            className: "block text-sm font-bold text-gray-700 mb-1"
+                                                        }, "Product Name"),
+                                                        React.createElement('input', {
+                                                            type: "text",
+                                                            value: product.title,
+                                                            onChange: (e) => updateProduct(product.id, 'title', e.target.value),
+                                                            className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                                        })
+                                                    ),
+
+                                                    React.createElement('div', null,
+                                                        React.createElement('label', {
+                                                            className: "block text-sm font-bold text-gray-700 mb-1"
+                                                        }, "Category"),
+                                                        React.createElement('select', {
+                                                            value: product.category,
+                                                            onChange: (e) => updateProduct(product.id, 'category', e.target.value),
+                                                            className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                                        },
+                                                            categories.map(cat => 
+                                                                React.createElement('option', { key: cat, value: cat }, cat)
+                                                            )
                                                         )
+                                                    ),
+
+                                                    React.createElement('div', null,
+                                                        React.createElement('label', {
+                                                            className: "block text-sm font-bold text-gray-700 mb-1"
+                                                        }, "Price (₹)"),
+                                                        React.createElement('div', { className: "relative" },
+                                                            React.createElement('span', {
+                                                                className: "absolute left-3 top-2.5 text-gray-500 font-bold"
+                                                            }, "₹"),
+                                                            React.createElement('input', {
+                                                                type: "number",
+                                                                step: "1",
+                                                                value: product.price,
+                                                                onChange: (e) => updateProduct(product.id, 'price', parseInt(e.target.value) || 0),
+                                                                className: "w-full pl-8 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                                            })
+                                                        ),
+                                                        React.createElement('p', {
+                                                            className: "text-xs text-gray-500 mt-1"
+                                                        }, `Display: ${formatINR(product.price)}`)
+                                                    ),
+
+                                                    React.createElement('div', null,
+                                                        React.createElement('label', {
+                                                            className: "block text-sm font-bold text-gray-700 mb-1"
+                                                        }, "Image Alt Text"),
+                                                        React.createElement('input', {
+                                                            type: "text",
+                                                            value: product.imgAlt,
+                                                            onChange: (e) => updateProduct(product.id, 'imgAlt', e.target.value),
+                                                            className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                                        })
                                                     )
                                                 ),
 
-                                                React.createElement('div', null,
+                                                React.createElement('div', { className: "mb-4" },
                                                     React.createElement('label', {
                                                         className: "block text-sm font-bold text-gray-700 mb-1"
-                                                    }, "Price (₹)"),
-                                                    React.createElement('div', { className: "relative" },
-                                                        React.createElement('span', {
-                                                            className: "absolute left-3 top-2.5 text-gray-500 font-bold"
-                                                        }, "₹"),
-                                                        React.createElement('input', {
-                                                            type: "number",
-                                                            step: "1",
-                                                            value: product.price,
-                                                            onChange: (e) => updateProduct(product.id, 'price', parseInt(e.target.value) || 0),
-                                                            className: "w-full pl-8 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
-                                                        })
-                                                    ),
-                                                    React.createElement('p', {
-                                                        className: "text-xs text-gray-500 mt-1"
-                                                    }, `Display: ${formatINR(product.price)}`)
+                                                    }, "Description"),
+                                                    React.createElement('textarea', {
+                                                        value: product.description,
+                                                        onChange: (e) => updateProduct(product.id, 'description', e.target.value),
+                                                        rows: "3",
+                                                        className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition resize-none"
+                                                    })
                                                 ),
 
-                                                React.createElement('div', null,
-                                                    React.createElement('label', {
-                                                        className: "block text-sm font-bold text-gray-700 mb-1"
-                                                    }, "Image Alt Text"),
-                                                    React.createElement('input', {
-                                                        type: "text",
-                                                        value: product.imgAlt,
-                                                        onChange: (e) => updateProduct(product.id, 'imgAlt', e.target.value),
-                                                        className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
-                                                    })
-                                                )
-                                            ),
-
-                                            React.createElement('div', { className: "mb-4" },
-                                                React.createElement('label', {
-                                                    className: "block text-sm font-bold text-gray-700 mb-1"
-                                                }, "Description"),
-                                                React.createElement('textarea', {
-                                                    value: product.description,
-                                                    onChange: (e) => updateProduct(product.id, 'description', e.target.value),
-                                                    rows: "3",
-                                                    className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition resize-none"
-                                                })
-                                            ),
-
-                                            React.createElement('div', { className: "flex justify-end" },
-                                                React.createElement('button', {
-                                                    onClick: () => deleteProduct(product.id),
-                                                    className: "px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2 font-semibold"
-                                                },
-                                                    React.createElement('i', { 'data-lucide': 'trash-2', className: "w-4 h-4" }),
-                                                    "Delete Product"
+                                                React.createElement('div', { className: "flex justify-end" },
+                                                    React.createElement('button', {
+                                                        onClick: () => deleteProduct(product.id),
+                                                        className: "px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2 font-semibold"
+                                                    },
+                                                        React.createElement('i', { 'data-lucide': 'trash-2', className: "w-4 h-4" }),
+                                                        "Delete Product"
+                                                    )
                                                 )
                                             )
                                         )
