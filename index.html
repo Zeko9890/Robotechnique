@@ -56,6 +56,49 @@
     pointer-events: none;
     user-select: none;
   }
+
+  /* Premium Search Bar Styles */
+  .search-container {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .search-input {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+
+  .search-input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    background: rgba(255, 255, 255, 0.98);
+  }
+
+  .search-input:hover {
+    border-color: #cbd5e1;
+  }
+
+  .search-results {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .search-result-item:hover {
+    background: #f0f9ff;
+    border-left: 4px solid #0ea5e9;
+  }
+
+  .search-highlight {
+    background: linear-gradient(120deg, #fef3c7 0%, #fef3c7 100%);
+    background-repeat: no-repeat;
+    background-size: 100% 40%;
+    background-position: 0 90%;
+  }
 </style>
 
 <!-- Google Font (Inter) -->
@@ -213,13 +256,13 @@
         .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
 
         @media (min-width: 768px) {
-            .md\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-            .md\\:flex { display: flex; }
-            .md\\:hidden { display: none; }
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+            .md\:flex { display: flex; }
+            .md\:hidden { display: none; }
         }
 
         @media (min-width: 1024px) {
-            .lg\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+            .lg\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
         }
 
         /* Custom scrollbar */
@@ -266,25 +309,62 @@
     <nav class="container">
   <div class="flex justify-between items-center h-20">
 
-    <!-- Logo (slightly larger & moved left) -->
+    <!-- Logo -->
     <div class="flex items-center gap-3 -ml-3">
       <div class="h-14 w-14 flex items-center justify-center">
         <img src="./logo.jpg" alt="RoboTechnique Logo" class="h-12 w-auto object-contain">
       </div>
       <a href="#" class="text-3xl font-extrabold tracking-tight">
         <span class="text-gray-900">Robo</span>
-        <span class="half-color-t">T</span>
-        <span class="text-sky-500">echnique</span>
+        <span class="text-sky-500">Technique</span>
       </a>
     </div>
 
-    <!-- Centered Navigation Links -->
-    <div class="flex-1 flex justify-center">
-      <div class="hidden md:flex space-x-10">
-        <a href="#home" class="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">Home</a>
-        <a href="#shop" class="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">Shop</a>
-        <a href="#brand" class="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">Brand</a>
-        <a href="#contact" class="text-gray-600 hover:text-sky-600 transition duration-150 font-medium py-1 border-b-2 border-transparent hover:border-sky-500">Contact</a>
+    <!-- Search Bar -->
+    <div class="flex-1 max-w-lg mx-8">
+      <div class="search-container">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="search-input"
+            placeholder="Search robotics components, sensors, kits..."
+            class="w-full px-4 py-3 pl-12 search-input rounded-xl text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-300"
+          >
+          <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+            <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+          </div>
+          <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <kbd class="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-300 rounded">⌘K</kbd>
+          </div>
+        </div>
+        
+        <!-- Search Results Dropdown -->
+        <div id="search-results" class="absolute top-full left-0 right-0 mt-2 search-results rounded-xl shadow-2xl z-50 hidden max-h-96 overflow-y-auto">
+          <div class="p-4">
+            <div class="text-sm text-gray-500 mb-3">Quick Categories</div>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+              <button class="search-category-btn text-left p-3 rounded-lg hover:bg-sky-50 transition border border-gray-100" data-category="Actuation">
+                <div class="font-medium text-gray-800">Actuation</div>
+                <div class="text-xs text-gray-500">Motors, Drivers</div>
+              </button>
+              <button class="search-category-btn text-left p-3 rounded-lg hover:bg-sky-50 transition border border-gray-100" data-category="Sensing">
+                <div class="font-medium text-gray-800">Sensing</div>
+                <div class="text-xs text-gray-500">Sensors, Vision</div>
+              </button>
+              <button class="search-category-btn text-left p-3 rounded-lg hover:bg-sky-50 transition border border-gray-100" data-category="Kits">
+                <div class="font-medium text-gray-800">Kits</div>
+                <div class="text-xs text-gray-500">Complete Sets</div>
+              </button>
+              <button class="search-category-btn text-left p-3 rounded-lg hover:bg-sky-50 transition border border-gray-100" data-category="Control">
+                <div class="font-medium text-gray-800">Control</div>
+                <div class="text-xs text-gray-500">Units, Boards</div>
+              </button>
+            </div>
+            <div id="search-results-list" class="space-y-2">
+              <!-- Dynamic search results will appear here -->
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -480,6 +560,9 @@
     const mobileMenu = document.getElementById('mobile-menu');
     const header = document.getElementById('header');
     const productsGrid = document.getElementById('products-grid');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchResultsList = document.getElementById('search-results-list');
 
     // Product Data
     const products = [
@@ -492,6 +575,135 @@
         { title: "High-Speed DC Motor", category: "Actuation", price: 1890, imgSrc: "https://placehold.co/400x300/fff7ed/7c2d12?text=DC+Motor", imgAlt: "DC Motor" },
         { title: "12V Power Regulator", category: "Control", price: 2990, imgSrc: "https://placehold.co/400x300/e0f2f1/0f766e?text=Power+Regulator", imgAlt: "Power Regulator" },
     ];
+
+    // Search Functionality
+    function initSearch() {
+        let searchTimeout;
+        
+        // Search input handler
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = e.target.value.toLowerCase().trim();
+                if (query.length > 0) {
+                    performSearch(query);
+                    searchResults.classList.remove('hidden');
+                } else {
+                    searchResults.classList.add('hidden');
+                }
+            }, 300);
+        });
+
+        // Focus handler
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.length > 0) {
+                searchResults.classList.remove('hidden');
+            }
+        });
+
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape') {
+                searchResults.classList.add('hidden');
+                searchInput.blur();
+            }
+        });
+
+        // Category buttons
+        document.querySelectorAll('.search-category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.getAttribute('data-category');
+                searchInput.value = category;
+                performSearch(category);
+                searchResults.classList.remove('hidden');
+            });
+        });
+    }
+
+    function performSearch(query) {
+        const filteredProducts = products.filter(product => 
+            product.title.toLowerCase().includes(query) ||
+            product.category.toLowerCase().includes(query) ||
+            product.description.toLowerCase().includes(query)
+        );
+
+        displaySearchResults(filteredProducts, query);
+    }
+
+    function displaySearchResults(results, query) {
+        if (results.length === 0) {
+            searchResultsList.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i data-lucide="search" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i>
+                    <p class="font-medium">No products found</p>
+                    <p class="text-sm mt-1">Try different keywords or browse categories</p>
+                </div>
+            `;
+        } else {
+            searchResultsList.innerHTML = results.map(product => `
+                <div class="search-result-item p-3 rounded-lg border border-gray-100 hover:border-sky-200 transition cursor-pointer" 
+                     onclick="scrollToProduct('${product.title}')">
+                    <div class="flex items-center space-x-3">
+                        <img src="${product.imgSrc}" alt="${product.imgAlt}" class="w-12 h-12 object-cover rounded-lg">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-gray-800 mb-1">
+                                ${highlightText(product.title, query)}
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-sky-600 bg-sky-50 px-2 py-1 rounded">
+                                    ${product.category}
+                                </span>
+                                <span class="text-sm font-bold text-gray-900">
+                                    ${formatINR(product.price)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        lucide.createIcons();
+    }
+
+    function highlightText(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+
+    function scrollToProduct(productTitle) {
+        const productElement = Array.from(document.querySelectorAll('#products-grid .scroll-fade-in'))
+            .find(el => el.querySelector('h3').textContent === productTitle);
+        
+        if (productElement) {
+            productElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
+            // Add highlight effect
+            productElement.style.transform = 'scale(1.05)';
+            productElement.style.boxShadow = '0 0 0 3px rgba(14, 165, 233, 0.3)';
+            setTimeout(() => {
+                productElement.style.transform = '';
+                productElement.style.boxShadow = '';
+            }, 2000);
+        }
+        
+        searchResults.classList.add('hidden');
+        searchInput.value = '';
+    }
 
     // Utility Functions
     function formatINR(amount) {
@@ -803,37 +1015,38 @@
 }
 
     function proceedToWhatsApp() {
-      if (cart.length === 0) return;
+        const phoneInput = document.getElementById('phone-input');
+        const phoneError = document.getElementById('phone-error');
+        const phone = phoneInput.value.replace(/\D/g, '');
+        
+        if (phone.length !== 10) {
+            phoneError.textContent = 'Please enter a valid 10-digit Indian phone number.';
+            phoneError.classList.remove('hidden');
+            return;
+        }
+        
+        phoneError.classList.add('hidden');
+        
+        let message = `*RoboTechnique Order Confirmation*\n\n`;
+        message += `*Order Total:* ${formatINR(checkoutDetails.total)}\n`;
+        message += `*Contact:* +91 ${phone}\n\n`;
+        message += `*Items (${checkoutDetails.itemCount}):*\n`;
+        
+        cart.forEach((item, index) => {
+            const itemPrice = cleanPrice(item.price);
+            message += `${index + 1}. ${item.title} (Qty: ${item.quantity}, Price: ${formatINR(itemPrice * item.quantity)})\n`;
+        });
+        
+        message += `\n*Please confirm this order and receive payment details via this chat.*`;
 
-      const phoneInput = document.getElementById("phone-input");
-      const userPhone = phoneInput ? phoneInput.value.trim() : "";
-
-     // Collect order details
-      const itemsText = cart
-        .map(
-          (item, index) =>
-            `${index + 1}. ${item.title} × ${item.quantity} = ₹${cleanPrice(
-              item.price
-            ) * item.quantity}`
-        )
-        .join("%0A"); // Line breaks for WhatsApp message
-
-      const subtotal = cart.reduce(
-        (sum, item) => sum + cleanPrice(item.price) * item.quantity,
-        0
-      );
-
-     // Change shipping to "On WhatsApp"
-     const message = `*🛒 New Order from RoboTechnique Store*%0A%0A${itemsText}%0A%0A💰 *Subtotal:* ₹${subtotal}%0A🚚 *Delivery Charges:* On WhatsApp%0A📦 *Total:* ₹${subtotal}%0A%0A📱 *Customer Number:* ${
-       userPhone || "Not provided"
-     }`;
-
-     // Admin WhatsApp number
-     const adminNumber = "919718335330"; // include country code, no + symbol
-     const whatsappURL = `https://wa.me/${adminNumber}?text=${message}`;
-
-     // Redirect
-     window.open(whatsappURL, "_blank");
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+        
+        window.open(whatsappURL, '_blank');
+        closeCheckoutModal();
+        closeCartDrawer();
+        cart = [];
+        updateCartCount();
     }
 
     // Animation and Scroll Effects
@@ -956,6 +1169,9 @@
         // Initialize Lucide icons
         lucide.createIcons();
         
+        // Initialize search functionality
+        initSearch();
+        
         // Render products
         renderProducts();
         
@@ -983,6 +1199,7 @@
     window.openCheckoutModal = openCheckoutModal;
     window.closeCheckoutModal = closeCheckoutModal;
     window.proceedToWhatsApp = proceedToWhatsApp;
+    window.scrollToProduct = scrollToProduct;
 </script>
 
 <style>
@@ -1135,11 +1352,7 @@
             <button onclick="closeCheckoutModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold">&times;</button>
             <h2 class="text-2xl font-bold mb-4 text-sky-600">Checkout</h2>
             <p class="mb-4">Proceed to complete your order via WhatsApp.</p>
-            <button
-            onclick="proceedToWhatsApp()" 
-            class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition">
-            Proceed to WhatsApp
-            </button>
+            <button onclick="proceedToWhatsApp()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition">Proceed to WhatsApp</button>
         </div>
     </div>
    <!-- ✅ Toast Container (for stacking multiple toasts) -->
