@@ -9,6 +9,9 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -17,6 +20,10 @@
         const { useState, useEffect } = React;
 
         function AdminPanel() {
+            // Supabase Configuration
+            const [supabase, setSupabase] = useState(null);
+            const [supabaseStatus, setSupabaseStatus] = useState('loading');
+            
             // Authentication State
             const [isAuthenticated, setIsAuthenticated] = useState(false);
             const [password, setPassword] = useState('');
@@ -26,64 +33,80 @@
             // ADMIN PASSWORD - Change this to your secure password
             const ADMIN_PASSWORD = 'RoboAnoop2025';
 
-            // Load initial data from localStorage or use defaults
-            const loadInitialData = () => {
+            // Initialize Supabase
+            useEffect(() => {
+                const initSupabase = async () => {
+                    try {
+                        // YOUR SUPABASE CREDENTIALS
+                        const SUPABASE_URL = 'https://lpylrmsbmivlbonsytwv.supabase.co';
+                        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxweWxybXNibWl2bGJvbnN5dHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMTM4MDMsImV4cCI6MjA3NzU4OTgwM30.r7PxT7UQzkXPeZ2Dtuj8l6gRdnWLTUY-1JrPjv5WyCo';
+                        
+                        const { createClient } = window.supabase;
+                        const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                        setSupabase(client);
+                        
+                        // Test connection
+                        const { data, error } = await client.from('products').select('*').limit(1);
+                        if (error) {
+                            console.error('Supabase connection test failed:', error);
+                            setSupabaseStatus('error');
+                        } else {
+                            console.log('Supabase connected successfully');
+                            setSupabaseStatus('connected');
+                        }
+                    } catch (error) {
+                        console.error('Error initializing Supabase:', error);
+                        setSupabaseStatus('error');
+                    }
+                };
+
+                initSupabase();
+            }, []);
+
+            // Load data from Supabase or localStorage
+            const loadInitialData = async () => {
                 try {
+                    // Try to load from Supabase first
+                    if (supabase && supabaseStatus === 'connected') {
+                        const { data: productsData, error: productsError } = await supabase
+                            .from('products')
+                            .select('*')
+                            .order('title', { ascending: true });
+
+                        if (!productsError) {
+                            console.log('Products loaded from Supabase:', productsData);
+                            
+                            // Load settings from localStorage
+                            const savedSettings = localStorage.getItem('robotechniqueSettings');
+                            const settings = savedSettings ? JSON.parse(savedSettings) : getDefaultSettings();
+                            
+                            return {
+                                products: productsData || [],
+                                settings: settings
+                            };
+                        } else {
+                            console.warn('Error loading from Supabase:', productsError);
+                        }
+                    }
+
+                    // Fallback to localStorage
                     const savedData = localStorage.getItem('robotechniqueData');
                     if (savedData) {
                         const data = JSON.parse(savedData);
                         return {
-                            products: data.products || getDefaultProducts(),
+                            products: data.products || [],
                             settings: data.settings || getDefaultSettings()
                         };
                     }
                 } catch (error) {
-                    console.error('Error loading saved data:', error);
+                    console.error('Error loading data:', error);
                 }
+                
                 return {
-                    products: getDefaultProducts(),
+                    products: [],
                     settings: getDefaultSettings()
                 };
             };
-
-            const getDefaultProducts = () => [
-                { 
-                    id: 1,
-                    title: "Quantum Motor Driver Pro", 
-                    category: "Actuation", 
-                    price: 4490, 
-                    description: "Advanced motor driver with precision control and high torque output for robotic applications.",
-                    imgSrc: "https://placehold.co/400x300/e9d5ff/1e40af?text=Motor+Driver", 
-                    imgAlt: "Motor Driver"
-                },
-                { 
-                    id: 2,
-                    title: "Vision-AI Sensor Array", 
-                    category: "Sensing", 
-                    price: 12999, 
-                    description: "Multi-sensor array with AI capabilities for object recognition and environment mapping.",
-                    imgSrc: "https://placehold.co/400x300/bae6fd/0369a1?text=AI+Vision", 
-                    imgAlt: "AI Vision Sensor"
-                },
-                { 
-                    id: 3,
-                    title: "Dev Kit: Arm & Gripper", 
-                    category: "Kits", 
-                    price: 8990, 
-                    description: "Complete robotic arm kit with programmable gripper and multiple degrees of freedom.",
-                    imgSrc: "https://placehold.co/400x300/fed7aa/ea580c?text=Robotic+Kit", 
-                    imgAlt: "Robotic Arm Kit"
-                },
-                { 
-                    id: 4,
-                    title: "Edge Control Unit v3", 
-                    category: "Control", 
-                    price: 5990, 
-                    description: "High-performance edge computing unit for real-time robotic control systems.",
-                    imgSrc: "https://placehold.co/400x300/d1d5db/4b5563?text=Control+Unit", 
-                    imgAlt: "Control Unit"
-                }
-            ];
 
             const getDefaultSettings = () => ({
                 freeShippingThreshold: 5000,
@@ -92,19 +115,35 @@
                 amazonLink: 'https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb'
             });
 
-            const initialData = loadInitialData();
-            
-            const [products, setProducts] = useState(initialData.products);
-            const [freeShippingThreshold, setFreeShippingThreshold] = useState(initialData.settings.freeShippingThreshold);
-            const [shippingCost, setShippingCost] = useState(initialData.settings.shippingCost);
-            const [whatsappNumber, setWhatsappNumber] = useState(initialData.settings.whatsappNumber);
-            const [amazonLink, setAmazonLink] = useState(initialData.settings.amazonLink);
+            const [products, setProducts] = useState([]);
+            const [freeShippingThreshold, setFreeShippingThreshold] = useState(5000);
+            const [shippingCost, setShippingCost] = useState(100);
+            const [whatsappNumber, setWhatsappNumber] = useState('919718335330');
+            const [amazonLink, setAmazonLink] = useState('https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb');
 
             const [activeTab, setActiveTab] = useState('products');
             const [savedNotification, setSavedNotification] = useState(false);
             const [editingProduct, setEditingProduct] = useState(null);
+            const [dataLoaded, setDataLoaded] = useState(false);
 
             const categories = ['Actuation', 'Sensing', 'Kits', 'Control'];
+
+            // Initialize data
+            useEffect(() => {
+                const initializeData = async () => {
+                    if (isAuthenticated) {
+                        const data = await loadInitialData();
+                        setProducts(data.products);
+                        setFreeShippingThreshold(data.settings.freeShippingThreshold);
+                        setShippingCost(data.settings.shippingCost);
+                        setWhatsappNumber(data.settings.whatsappNumber);
+                        setAmazonLink(data.settings.amazonLink);
+                        setDataLoaded(true);
+                    }
+                };
+
+                initializeData();
+            }, [isAuthenticated, supabase]);
 
             // Initialize Lucide icons
             useEffect(() => {
@@ -137,6 +176,7 @@
                 setIsAuthenticated(false);
                 sessionStorage.removeItem('adminAuth');
                 setPassword('');
+                setDataLoaded(false);
             };
 
             const formatINR = (amount) => {
@@ -154,7 +194,7 @@
                     const reader = new FileReader();
                     reader.onloadend = () => {
                         setProducts(products.map(p => 
-                            p.id === productId ? { ...p, imgSrc: reader.result } : p
+                            p.id === productId ? { ...p, image: reader.result } : p
                         ));
                     };
                     reader.readAsDataURL(file);
@@ -169,44 +209,113 @@
 
             const addNewProduct = () => {
                 const newProduct = {
-                    id: Date.now(),
+                    id: `temp-${Date.now()}`, // Temporary ID for local use
                     title: 'New Product',
                     category: 'Actuation',
                     price: 0,
                     description: 'Product description goes here...',
-                    imgSrc: 'https://placehold.co/400x300/eeeeee/333333?text=New+Product',
-                    imgAlt: 'New Product'
+                    image: 'https://placehold.co/400x300/eeeeee/333333?text=New+Product'
                 };
                 setProducts([...products, newProduct]);
                 setEditingProduct(newProduct.id);
             };
 
-            const deleteProduct = (id) => {
+            const deleteProduct = async (id) => {
                 if (window.confirm('Are you sure you want to delete this product?')) {
+                    // Skip if it's a temporary product (not saved to Supabase yet)
+                    if (id.toString().startsWith('temp-')) {
+                        setProducts(products.filter(p => p.id !== id));
+                        if (editingProduct === id) setEditingProduct(null);
+                        return;
+                    }
+
+                    // Delete from Supabase if connected
+                    if (supabase && supabaseStatus === 'connected') {
+                        const { error } = await supabase
+                            .from('products')
+                            .delete()
+                            .eq('id', id);
+                        
+                        if (error) {
+                            console.error('Error deleting product from Supabase:', error);
+                            alert('Error deleting product from database');
+                            return;
+                        }
+                    }
+                    
                     setProducts(products.filter(p => p.id !== id));
                     if (editingProduct === id) setEditingProduct(null);
                 }
             };
 
-            const saveChanges = () => {
+            const saveChanges = async () => {
                 setSavedNotification(true);
                 
-                // Save to localStorage for main website to use
-                const dataToSave = {
-                    products,
-                    settings: {
-                        freeShippingThreshold,
-                        shippingCost,
-                        whatsappNumber,
-                        amazonLink
-                    },
-                    lastUpdated: new Date().toISOString()
+                const settingsToSave = {
+                    freeShippingThreshold,
+                    shippingCost,
+                    whatsappNumber,
+                    amazonLink
                 };
+
+                try {
+                    // Save products to Supabase if connected
+                    if (supabase && supabaseStatus === 'connected') {
+                        for (const product of products) {
+                            const productData = {
+                                title: product.title,
+                                price: product.price,
+                                image: product.image,
+                                description: product.description,
+                                category: product.category
+                            };
+
+                            if (product.id.toString().startsWith('temp-')) {
+                                // New product - insert
+                                const { data, error } = await supabase
+                                    .from('products')
+                                    .insert(productData)
+                                    .select()
+                                    .single();
+                                
+                                if (error) {
+                                    console.error('Error inserting product to Supabase:', error);
+                                } else if (data) {
+                                    // Update local ID with the real UUID from Supabase
+                                    setProducts(prev => prev.map(p => 
+                                        p.id === product.id ? { ...data } : p
+                                    ));
+                                }
+                            } else {
+                                // Existing product - update
+                                const { error } = await supabase
+                                    .from('products')
+                                    .update(productData)
+                                    .eq('id', product.id);
+                                
+                                if (error) {
+                                    console.error('Error updating product in Supabase:', error);
+                                }
+                            }
+                        }
+                        console.log('Products saved to Supabase');
+                    }
+
+                    // Save settings to localStorage
+                    localStorage.setItem('robotechniqueSettings', JSON.stringify(settingsToSave));
+                    
+                    // Also save complete data to localStorage as backup
+                    localStorage.setItem('robotechniqueData', JSON.stringify({
+                        products,
+                        settings: settingsToSave,
+                        lastUpdated: new Date().toISOString()
+                    }));
+                    
+                    console.log('Changes saved successfully');
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                }
                 
-                // Save to localStorage (for immediate use by main website)
-                localStorage.setItem('robotechniqueData', JSON.stringify(dataToSave));
-                
-                console.log('Data saved to localStorage:', dataToSave);
                 setTimeout(() => setSavedNotification(false), 3000);
             };
 
@@ -228,16 +337,64 @@
                 link.click();
             };
 
-            const resetToDefaults = () => {
+            const resetToDefaults = async () => {
                 if (window.confirm('Are you sure you want to reset all data to defaults? This cannot be undone.')) {
-                    setProducts(getDefaultProducts());
+                    // Clear products from Supabase if connected
+                    if (supabase && supabaseStatus === 'connected') {
+                        try {
+                            const { error } = await supabase
+                                .from('products')
+                                .delete()
+                                .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all products
+                            
+                            if (error) {
+                                console.error('Error clearing Supabase products:', error);
+                            }
+                        } catch (error) {
+                            console.error('Error resetting Supabase data:', error);
+                        }
+                    }
+                    
+                    // Reset local state
+                    setProducts([]);
                     const defaultSettings = getDefaultSettings();
                     setFreeShippingThreshold(defaultSettings.freeShippingThreshold);
                     setShippingCost(defaultSettings.shippingCost);
                     setWhatsappNumber(defaultSettings.whatsappNumber);
                     setAmazonLink(defaultSettings.amazonLink);
+                    
+                    // Clear localStorage
                     localStorage.removeItem('robotechniqueData');
+                    localStorage.removeItem('robotechniqueSettings');
                 }
+            };
+
+            // Database Status Indicator
+            const DatabaseStatus = () => {
+                if (supabaseStatus === 'loading') {
+                    return React.createElement('div', {
+                        className: "flex items-center gap-2 text-yellow-600 text-sm"
+                    },
+                        React.createElement('i', { 'data-lucide': 'loader', className: "w-4 h-4 animate-spin" }),
+                        "Connecting to database..."
+                    );
+                }
+                
+                if (supabaseStatus === 'connected') {
+                    return React.createElement('div', {
+                        className: "flex items-center gap-2 text-green-600 text-sm"
+                    },
+                        React.createElement('i', { 'data-lucide': 'database', className: "w-4 h-4" }),
+                        `Database Connected (${products.length} products)`
+                    );
+                }
+                
+                return React.createElement('div', {
+                    className: "flex items-center gap-2 text-red-600 text-sm"
+                },
+                    React.createElement('i', { 'data-lucide': 'alert-circle', className: "w-4 h-4" }),
+                    "Database Offline - Using Local Storage"
+                );
             };
 
             // LOGIN SCREEN
@@ -249,23 +406,19 @@
                        
                     // Logo + Title
                     React.createElement('div', { className: "text-center mb-8" },
-                        // 🧠 Logo image
                         React.createElement('img', { 
-                           src: "logo.jpg", // Make sure this file is in the public folder or same dir
+                           src: "logo.jpg",
                            alt: "RoboTech Logo",
                            className: "w-20 h-20 mx-auto mb-4 rounded-xl shadow-md object-contain"
                         }),
 
-                        // 🧩 Heading text
                         React.createElement('h1', { className: "text-4xl font-extrabold text-gray-900 mb-2" },
                           'Robo',
                            React.createElement('span', { className: "text-orange-500" }, 'T'),
                            React.createElement('span', { className: "text-sky-600" }, 'echnique')
                         ),
-
-                           React.createElement('p', { className: "text-gray-600 font-semibold" }, "Admin Access Portal")
+                        React.createElement('p', { className: "text-gray-600 font-semibold" }, "Admin Access Portal")
                     ),
-
 
                         // Login Form
                         React.createElement('div', { className: "bg-white rounded-2xl shadow-2xl p-8 border-2 border-gray-100" },
@@ -321,6 +474,18 @@
                 );
             }
 
+            // Show loading while data is being loaded
+            if (!dataLoaded) {
+                return React.createElement('div', {
+                    className: "min-h-screen bg-gray-50 flex items-center justify-center"
+                },
+                    React.createElement('div', { className: "text-center" },
+                        React.createElement('i', { 'data-lucide': 'loader', className: "w-12 h-12 text-sky-600 animate-spin mx-auto mb-4" }),
+                        React.createElement('p', { className: "text-gray-600 font-semibold" }, "Loading data...")
+                    )
+                );
+            }
+
             // MAIN ADMIN PANEL
             return React.createElement('div', { className: "min-h-screen bg-gray-50" },
                 // Header
@@ -333,13 +498,14 @@
                                     React.createElement('span', { className: "text-orange-400" }, 'T'),
                                     'echnique Admin'
                                 ),
-                                React.createElement('p', { className: "text-sky-100 text-sm mt-1" }, "Manage your robotics store")
+                                React.createElement('p', { className: "text-sky-100 text-sm mt-1" }, "Manage your robotics store"),
+                                React.createElement(DatabaseStatus)
                             ),
                             React.createElement('div', { className: "flex gap-3" },
                                 React.createElement('button', {
                                     onClick: resetToDefaults,
                                     className: "bg-yellow-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-yellow-600 transition font-semibold shadow-md"
-                                }, "Reset Defaults"),
+                                }, "Reset All"),
                                 React.createElement('button', {
                                     onClick: exportData,
                                     className: "bg-white text-sky-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-sky-50 transition font-semibold shadow-md"
@@ -368,7 +534,9 @@
                     className: "fixed top-24 right-4 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 animate-pulse"
                 },
                     React.createElement('i', { 'data-lucide': 'check', className: "w-5 h-5" }),
-                    React.createElement('span', { className: "font-bold" }, "Changes saved successfully! Main website updated.")
+                    supabaseStatus === 'connected' 
+                        ? React.createElement('span', { className: "font-bold" }, "Changes saved to database!")
+                        : React.createElement('span', { className: "font-bold" }, "Changes saved to local storage!")
                 ),
 
                 React.createElement('div', { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" },
@@ -432,8 +600,8 @@
                                     className: "bg-white rounded-xl shadow-md p-4 border-2 border-gray-100 hover:border-sky-400 hover:shadow-xl transition cursor-pointer transform hover:scale-105"
                                 },
                                     React.createElement('img', {
-                                        src: product.imgSrc,
-                                        alt: product.imgAlt,
+                                        src: product.image,
+                                        alt: product.title,
                                         className: "w-full h-32 object-cover rounded-lg mb-3"
                                     }),
                                     React.createElement('h3', {
@@ -441,7 +609,7 @@
                                     }, product.title),
                                     React.createElement('span', {
                                         className: "text-xs font-semibold text-sky-600 uppercase"
-                                    }, product.category),
+                                    }, product.category || 'Uncategorized'),
                                     React.createElement('p', {
                                         className: "text-lg font-extrabold text-gray-900 mt-2"
                                     }, formatINR(product.price)),
@@ -476,8 +644,8 @@
                                                 }, "Product Image"),
                                                 React.createElement('div', { className: "relative group" },
                                                     React.createElement('img', {
-                                                        src: product.imgSrc,
-                                                        alt: product.imgAlt,
+                                                        src: product.image,
+                                                        alt: product.title,
                                                         className: "w-full h-40 object-cover rounded-lg border-2 border-gray-200"
                                                     }),
                                                     React.createElement('label', {
@@ -517,7 +685,7 @@
                                                             className: "block text-sm font-bold text-gray-700 mb-1"
                                                         }, "Category"),
                                                         React.createElement('select', {
-                                                            value: product.category,
+                                                            value: product.category || 'Actuation',
                                                             onChange: (e) => updateProduct(product.id, 'category', e.target.value),
                                                             className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
                                                         },
@@ -551,12 +719,12 @@
                                                     React.createElement('div', null,
                                                         React.createElement('label', {
                                                             className: "block text-sm font-bold text-gray-700 mb-1"
-                                                        }, "Image Alt Text"),
+                                                        }, "Image URL"),
                                                         React.createElement('input', {
                                                             type: "text",
-                                                            value: product.imgAlt,
-                                                            onChange: (e) => updateProduct(product.id, 'imgAlt', e.target.value),
-                                                            className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition"
+                                                            value: product.image,
+                                                            onChange: (e) => updateProduct(product.id, 'image', e.target.value),
+                                                            className: "w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition text-sm"
                                                         })
                                                     )
                                                 ),
