@@ -246,21 +246,26 @@
                     className: "min-h-screen bg-gradient-to-br from-sky-50 via-white to-orange-50 flex items-center justify-center p-4"
                 }, 
                     React.createElement('div', { className: "max-w-md w-full" },
-                        // Logo
-                        React.createElement('div', { className: "text-center mb-8" },
-                            React.createElement('div', { className: "inline-block bg-white rounded-2xl p-6 shadow-lg mb-4" },
-                                React.createElement('i', { 
-                                    'data-lucide': 'lock',
-                                    className: "w-16 h-16 text-sky-600 mx-auto"
-                                })
-                            ),
-                            React.createElement('h1', { className: "text-4xl font-extrabold text-gray-900 mb-2" },
-                                'Robo',
-                                React.createElement('span', { className: "text-orange-500" }, 'T'),
-                                React.createElement('span', { className: "text-sky-600" }, 'echnique')
-                            ),
-                            React.createElement('p', { className: "text-gray-600 font-semibold" }, "Admin Access Portal")
+                       
+                    // Logo + Title
+                    React.createElement('div', { className: "text-center mb-8" },
+                        // 🧠 Logo image
+                        React.createElement('img', { 
+                           src: "logo.jpg", // Make sure this file is in the public folder or same dir
+                           alt: "RoboTech Logo",
+                           className: "w-20 h-20 mx-auto mb-4 rounded-xl shadow-md object-contain"
+                        }),
+
+                        // 🧩 Heading text
+                        React.createElement('h1', { className: "text-4xl font-extrabold text-gray-900 mb-2" },
+                          'Robo',
+                           React.createElement('span', { className: "text-orange-500" }, 'T'),
+                           React.createElement('span', { className: "text-sky-600" }, 'echnique')
                         ),
+
+                           React.createElement('p', { className: "text-gray-600 font-semibold" }, "Admin Access Portal")
+                    ),
+
 
                         // Login Form
                         React.createElement('div', { className: "bg-white rounded-2xl shadow-2xl p-8 border-2 border-gray-100" },
