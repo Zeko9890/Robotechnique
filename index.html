@@ -614,27 +614,39 @@
     }
 
     function showSuccessToast(productName) {
-        // Update toast message with product name
-        toast.innerHTML = `
-            <i data-lucide="check-circle" class="w-5 h-5 text-green-300"></i>
-            <span class="font-semibold">${productName} added to cart!</span>
-        `;
-        
-        // Show toast with enhanced animation
-        toast.classList.remove('hidden');
-        toast.style.animation = 'slideInBounce 0.6s ease-out';
-        
-        // Re-initialize icons
-        lucide.createIcons();
+      // Get or create the toast container
+      let container = document.getElementById("toast-container");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "toast-container";
+        container.className = "fixed top-20 right-6 z-[60] flex flex-col space-y-3";
+        document.body.appendChild(container);
+      }
 
-        // Hide toast after delay
-        setTimeout(() => {
-            toast.style.animation = 'slideOut 0.4s ease-in';
-            setTimeout(() => {
-                toast.classList.add('hidden');
-                toast.style.animation = '';
-            }, 400);
-        }, 8000);
+      // Create toast element
+      const toast = document.createElement("div");
+      toast.className =
+        "flex items-center space-x-3 p-4 bg-sky-600 text-white rounded-xl shadow-2xl border-b-4 border-orange-300 opacity-0 translate-y-[-10px] transition-all duration-500";
+      toast.innerHTML = `
+        <i data-lucide="check-circle" class="w-5 h-5 text-green-300 animate-pulse"></i>
+        <span class="font-semibold">${productName} added to cart!</span>
+      `;
+
+      // Append to container
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Animate in
+      requestAnimationFrame(() => {
+       toast.classList.remove("opacity-0", "translate-y-[-10px]");
+       toast.classList.add("opacity-100", "translate-y-0");
+      });
+
+      // Auto-hide after 3 seconds (but smoothly)
+      setTimeout(() => {
+       toast.classList.add("opacity-0", "translate-y-[-10px]");
+       setTimeout(() => toast.remove(), 600);
+      }, 4000);
     }
 
     function updateQuantity(title, delta) {
@@ -789,7 +801,6 @@
     // Re-initialize Lucide icons
     lucide.createIcons();
 }
-
 
     function proceedToWhatsApp() {
         const phoneInput = document.getElementById('phone-input');
@@ -1128,12 +1139,7 @@
             <button onclick="proceedToWhatsApp()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition">Proceed to WhatsApp</button>
         </div>
     </div>
-    <!-- ✅ Toast Notification -->
-    <div id="toast" class="fixed top-20 right-6 z-[60] p-4 bg-sky-600 text-white rounded-xl shadow-2xl flex items-center space-x-3 border-b-4 border-orange-300">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-5 h-5 animate-pulse">
-        <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
-  </svg>
-  <span class="font-semibold">Item added to cart!</span>
-</div>
+   <!-- ✅ Toast Container (for stacking multiple toasts) -->
+   <div id="toast-container" class="fixed top-20 right-6 z-[60] flex flex-col space-y-3"></div>
 </body>
 </html>
