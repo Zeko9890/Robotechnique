@@ -28,6 +28,17 @@
     position: relative;
     z-index: 10 !important;
   }
+  /* ✨ Smooth Toast Animation */
+ #toast {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.4s ease;
+  }
+
+ #toast.show {
+  opacity: 1;
+  transform: translateY(0);
+  }
 </style>
 
 <!-- Google Font (Inter) -->
@@ -228,9 +239,9 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-20 right-6 z-60 p-4 bg-sky-600 text-white rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 toast-enter border-b-4 border-orange-300 hidden">
-        <i data-lucide="zap" class="w-5 h-5 animate-pulse"></i>
-        <span class="font-semibold">Item added to cart!</span>
+     <div id="toast" class="fixed top-20 right-6 z-[60] p-4 bg-sky-600 text-white rounded-xl shadow-2xl flex items-center space-x-3 border-b-4 border-orange-300">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-5 h-5 animate-pulse"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>
+       <span class="font-semibold">Item added to cart!</span>
     </div>
 
     <!-- Navigation -->
@@ -929,6 +940,19 @@
             modal.classList.remove("flex");
             document.body.style.overflow = ""; // unlock scroll
         }
+        // 🔔 Smooth Toast Show/Hide
+         function showToast() {
+          const toast = document.getElementById("toast");
+          if (!toast) return;
+
+        // Make toast visible with animation
+          toast.classList.add("show");
+
+        // Hide it smoothly after 2s
+          setTimeout(() => {
+            toast.classList.remove("show");
+          }, 2000);
+         }
 
         // Make functions globally available
         window.addToCart = addToCart;
@@ -940,7 +964,7 @@
         window.closeCheckoutModal = closeCheckoutModal;
         window.proceedToWhatsApp = proceedToWhatsApp;
     </script>
-    
+
     <!-- 🛒 Cart Drawer -->
     <div id="cart-drawer" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex flex-col">
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
@@ -968,5 +992,12 @@
             <button onclick="proceedToWhatsApp()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition">Proceed to WhatsApp</button>
         </div>
     </div>
+    <!-- ✅ Toast Notification -->
+    <div id="toast" class="fixed top-20 right-6 z-[60] p-4 bg-sky-600 text-white rounded-xl shadow-2xl flex items-center space-x-3 border-b-4 border-orange-300">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-5 h-5 animate-pulse">
+        <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+  </svg>
+  <span class="font-semibold">Item added to cart!</span>
+</div>
 </body>
 </html>
