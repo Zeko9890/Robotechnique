@@ -78,6 +78,9 @@
     <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         /* Reset and Base Styles */
         * {
@@ -386,12 +389,16 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" id="products-grid">
-                    <!-- Products will be loaded by JavaScript -->
+                    <!-- Products will be loaded by JavaScript from Supabase -->
+                    <div class="text-center py-12">
+                        <i data-lucide="loader" class="w-12 h-12 text-sky-600 animate-spin mx-auto mb-4"></i>
+                        <p class="text-gray-600">Loading products...</p>
+                    </div>
                 </div>
                 
                 <div class="scroll-fade-in text-center mt-16">
                     <a href="#shop" class="inline-flex justify-center items-center px-8 py-3 border border-sky-500 text-base font-bold rounded-full shadow-lg text-sky-600 bg-white hover:bg-sky-50 transition duration-300 transform hover:scale-105">
-                        Browse All Categories (<span id="product-count">8</span> Products)
+                        Browse All Categories (<span id="product-count">0</span> Products)
                     </a>
                 </div>
             </div>
@@ -435,14 +442,10 @@
     </main>
 
     <!-- Footer -->
-    <!-- Footer -->
-<footer class="w-full bg-gray-900/90 backdrop-blur-md text-gray-400 py-10 mt-12 border-t border-gray-800 relative z-10">
+    <footer class="w-full bg-gray-900/90 backdrop-blur-md text-gray-400 py-10 mt-12 border-t border-gray-800 relative z-10">
   <div class="container text-center">
     <div class="flex flex-col items-center gap-3 mb-3">
-      <!-- Replace colored RT box with your actual logo -->
       <img src="./logo.jpg" alt="RoboTechnique Logo" class="h-12 w-auto object-contain rounded-lg">
-
-      <!-- Company Name -->
       <p class="text-xl font-extrabold tracking-tight text-gray-100">RoboTechnique</p>
     </div>
 
@@ -462,13 +465,14 @@
 
  <script>
     // Global Constants
-    const AMAZON_LINK = "https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb";
-    const WHATSAPP_NUMBER = '919718335330';
-
+    const SUPABASE_URL = 'https://lpylrmsbmivlbonsytwv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxweWxybXNibWl2bGJvbnN5dHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMTM4MDMsImV4cCI6MjA3NzU4OTgwM30.r7PxT7UQzkXPeZ2Dtuj8l6gRdnWLTUY-1JrPjv5WyCo';
+    
     // State Management
     let cart = [];
     let isAddingToCart = false;
     let checkoutDetails = { total: 0, itemCount: 0 };
+    let products = []; // Will be loaded from Supabase
 
     // DOM Elements
     const cartDrawer = document.getElementById('cart-drawer');
@@ -481,17 +485,8 @@
     const header = document.getElementById('header');
     const productsGrid = document.getElementById('products-grid');
 
-    // Product Data
-    const products = [
-        { title: "Quantum Motor Driver Pro", category: "Actuation", price: 4490, imgSrc: "https://placehold.co/400x300/e9d5ff/1e40af?text=Motor+Driver", imgAlt: "Motor Driver" },
-        { title: "Vision-AI Sensor Array", category: "Sensing", price: 12999, imgSrc: "https://placehold.co/400x300/bae6fd/0369a1?text=AI+Vision", imgAlt: "AI Vision Sensor" },
-        { title: "Dev Kit: Arm & Gripper", category: "Kits", price: 8990, imgSrc: "https://placehold.co/400x300/fed7aa/ea580c?text=Robotic+Kit", imgAlt: "Robotic Arm Kit" },
-        { title: "Edge Control Unit v3", category: "Control", price: 5990, imgSrc: "https://placehold.co/400x300/d1d5db/4b5563?text=Control+Unit", imgAlt: "Control Unit" },
-        { title: "Long-Range Lidar Unit", category: "Sensing", price: 15499, imgSrc: "https://placehold.co/400x300/fecaca/dc2626?text=Lidar+Unit", imgAlt: "Lidar Unit" },
-        { title: "Modular Chassis Frame", category: "Kits", price: 6590, imgSrc: "https://placehold.co/400x300/d1fae5/065f46?text=Chassis+Frame", imgAlt: "Chassis Frame" },
-        { title: "High-Speed DC Motor", category: "Actuation", price: 1890, imgSrc: "https://placehold.co/400x300/fff7ed/7c2d12?text=DC+Motor", imgAlt: "DC Motor" },
-        { title: "12V Power Regulator", category: "Control", price: 2990, imgSrc: "https://placehold.co/400x300/e0f2f1/0f766e?text=Power+Regulator", imgAlt: "Power Regulator" },
-    ];
+    // Initialize Supabase
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Utility Functions
     function formatINR(amount) {
@@ -522,6 +517,33 @@
         }
     }
 
+    // Load products from Supabase
+    async function loadProductsFromSupabase() {
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .order('title', { ascending: true });
+
+            if (error) {
+                console.error('Error loading products from Supabase:', error);
+                // Fallback to localStorage if available
+                const savedData = localStorage.getItem('robotechniqueData');
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    return parsedData.products || [];
+                }
+                return [];
+            }
+
+            console.log('Products loaded from Supabase:', data);
+            return data || [];
+        } catch (error) {
+            console.error('Error loading products:', error);
+            return [];
+        }
+    }
+
     // Enhanced Add to Cart with Flying Animation
     function addToCart(product, buttonElement) {
         if (isAddingToCart) return;
@@ -529,15 +551,16 @@
 
         // Create a clean product object
         const cleanProduct = {
+            id: product.id,
             title: product.title.replace(/'/g, "\\'"),
             category: product.category,
             price: product.price,
-            imgSrc: product.imgSrc,
-            imgAlt: product.imgAlt,
+            imgSrc: product.image,
+            imgAlt: product.title,
             quantity: 1
         };
 
-        const existingItem = cart.find(item => item.title === cleanProduct.title);
+        const existingItem = cart.find(item => item.id === cleanProduct.id);
         if (existingItem) {
             existingItem.quantity += 1;
         } else {
@@ -568,7 +591,7 @@
         flyingElement.className = 'flying-item';
         flyingElement.innerHTML = `
             <div class="flying-item-content">
-                <img src="${product.imgSrc}" alt="${product.title}" class="flying-item-image">
+                <img src="${product.image}" alt="${product.title}" class="flying-item-image">
                 <div class="flying-item-glow"></div>
             </div>
         `;
@@ -649,8 +672,8 @@
       }, 4000);
     }
 
-    function updateQuantity(title, delta) {
-        const item = cart.find(item => item.title === title);
+    function updateQuantity(id, delta) {
+        const item = cart.find(item => item.id === id);
         if (item) {
             item.quantity = Math.max(1, item.quantity + delta);
             updateCartCount();
@@ -658,8 +681,8 @@
         }
     }
 
-    function removeFromCart(title) {
-        cart = cart.filter(item => item.title !== title);
+    function removeFromCart(id) {
+        cart = cart.filter(item => item.id !== id);
         updateCartCount();
         renderCartDrawer();
         
@@ -700,14 +723,26 @@
 
     // Render Functions
     function renderProducts() {
+        if (products.length === 0) {
+            productsGrid.innerHTML = `
+                <div class="col-span-4 text-center py-12">
+                    <i data-lucide="package" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+                    <p class="text-gray-600 text-lg">No products available at the moment.</p>
+                    <p class="text-gray-500 text-sm">Please check back later.</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
         productsGrid.innerHTML = products.map(product => `
             <div class="bg-white product-card-hover rounded-2xl p-6 shadow-xl border border-gray-100 hover:border-orange-200 scroll-fade-in">
                 <div class="h-48 bg-gray-50 flex items-center justify-center p-4 rounded-xl mb-4 overflow-hidden">
-                    <img src="${product.imgSrc}" alt="${product.imgAlt}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
+                    <img src="${product.image}" alt="${product.title}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
                 </div>
-                <span class="text-xs font-semibold text-sky-500 uppercase tracking-wider mb-1 block">${product.category}</span>
+                <span class="text-xs font-semibold text-sky-500 uppercase tracking-wider mb-1 block">${product.category || 'General'}</span>
                 <h3 class="text-xl font-bold mb-2 truncate text-gray-800">${product.title}</h3>
-                <p class="text-gray-500 mb-4 text-sm">Modular, high-speed unit designed for seamless integration.</p>
+                <p class="text-gray-500 mb-4 text-sm">${product.description || 'Modular, high-speed unit designed for seamless integration.'}</p>
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-3xl font-extrabold text-gray-900">${formatINR(product.price)}</span>
                 </div>
@@ -717,7 +752,7 @@
                         <span class="relative z-10">Add to Cart</span>
                         <div class="absolute inset-0 bg-green-500 transform scale-x-0 transition-transform duration-300 origin-left"></div>
                     </button>
-                    <a href="${AMAZON_LINK}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center py-2 text-sm bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition duration-300 border border-gray-300">
+                    <a href="${getAmazonLink()}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center py-2 text-sm bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition duration-300 border border-gray-300">
                         <svg class='w-4 h-4 mr-2' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M11.969 2.146c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636zm-.322 13.91l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077zm3.111-3.111l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077z" fill="#FF9900"/>
                         </svg>
@@ -726,6 +761,31 @@
                 </div>
             </div>
         `).join('');
+
+        // Update product count
+        document.getElementById('product-count').textContent = products.length;
+        
+        lucide.createIcons();
+    }
+
+    function getAmazonLink() {
+        // Try to get from localStorage first, then use default
+        const savedSettings = localStorage.getItem('robotechniqueSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            return settings.amazonLink || "https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb";
+        }
+        return "https://www.amazon.in/l/27943762031?me=A2NRJEQ5QH7HFB&tag=ShopReferral_7932ea5a-6372-4c7b-87f9-3d88e09214f4&ref=sf_seller_app_share_new_ls_srb";
+    }
+
+    function getWhatsAppNumber() {
+        // Try to get from localStorage first, then use default
+        const savedSettings = localStorage.getItem('robotechniqueSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            return settings.whatsappNumber || '919718335330';
+        }
+        return '919718335330';
     }
 
    function renderCartDrawer() {
@@ -762,14 +822,14 @@
                         <p class="text-xs text-gray-500">Unit: ${formatINR(cleanPrice(item.price))}</p>
                     </div>
                     <div class="flex items-center space-x-2 flex-shrink-0">
-                        <button onclick="updateQuantity('${item.title}', -1)" ${item.quantity <= 1 ? 'disabled' : ''} class="p-1 rounded-full text-gray-600 hover:bg-gray-200 ${item.quantity <= 1 ? 'opacity-50' : ''}">
+                        <button onclick="updateQuantity('${item.id}', -1)" ${item.quantity <= 1 ? 'disabled' : ''} class="p-1 rounded-full text-gray-600 hover:bg-gray-200 ${item.quantity <= 1 ? 'opacity-50' : ''}">
                             <i data-lucide="minus" class="w-4 h-4"></i>
                         </button>
                         <span class="font-medium text-lg w-6 text-center">${item.quantity}</span>
-                        <button onclick="updateQuantity('${item.title}', 1)" class="p-1 rounded-full text-gray-600 hover:bg-gray-200">
+                        <button onclick="updateQuantity('${item.id}', 1)" class="p-1 rounded-full text-gray-600 hover:bg-gray-200">
                             <i data-lucide="plus" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="removeFromCart('${item.title}')" class="p-1 ml-2 rounded-full text-red-500 hover:bg-red-50 transition">
+                        <button onclick="removeFromCart('${item.id}')" class="p-1 ml-2 rounded-full text-red-500 hover:bg-red-50 transition">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -863,7 +923,7 @@
 
         const message = `*🛒 Order Request - RoboTechnique*%0A%0AHello! I would like to order:%0A%0A${itemsText}%0A%0A💰 *Subtotal:* ₹${subtotal}%0A📦 *Total:* ₹${subtotal}%0A%0APlease confirm availability and provide payment details.`;
 
-        const businessNumber = "919718335330";
+        const businessNumber = getWhatsAppNumber();
         const whatsappURL = `https://wa.me/${businessNumber}?text=${message}`;
 
         window.open(whatsappURL, '_blank');
@@ -993,9 +1053,12 @@
     }
 
     // Initialize everything when DOM is loaded
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         // Initialize Lucide icons
         lucide.createIcons();
+        
+        // Load products from Supabase
+        products = await loadProductsFromSupabase();
         
         // Render products
         renderProducts();
@@ -1007,9 +1070,6 @@
         
         // Initialize Three.js background
         setTimeout(initThreeBackground, 100);
-        
-        // Update product count
-        document.getElementById('product-count').textContent = products.length;
         
         // Initialize empty cart drawer
         renderCartDrawer();
