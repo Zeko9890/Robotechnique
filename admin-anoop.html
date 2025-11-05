@@ -17,7 +17,7 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         function AdminPanel() {
             // Supabase Configuration - USING SERVICE ROLE KEY
@@ -89,7 +89,7 @@
                             .eq('id', 1)
                             .single();
 
-                        if (settingsError) {
+                        if (settingsError && settingsError.code !== 'PGRST116') {
                             console.warn('Error loading settings:', settingsError);
                             // Create default settings if they don't exist
                             const defaultSettings = getDefaultSettings();
@@ -146,11 +146,14 @@
             const [dataLoaded, setDataLoaded] = useState(false);
 
             const categories = ['Actuation', 'Sensing', 'Kits', 'Control'];
+            
+            // Track temporary IDs to prevent duplicates
+            const tempIdTracker = useRef(new Set());
 
-            // Initialize data
+            // Initialize data - FIXED: Only load data once after authentication
             useEffect(() => {
                 const initializeData = async () => {
-                    if (isAuthenticated) {
+                    if (isAuthenticated && supabaseStatus === 'connected') {
                         setDebugInfo('Loading data with admin privileges...');
                         const data = await loadInitialData();
                         setProducts(data.products);
@@ -164,13 +167,26 @@
                 };
 
                 initializeData();
-            }, [isAuthenticated, supabase]);
+            }, [isAuthenticated, supabaseStatus]);
 
-            // Initialize Lucide icons
+            // Initialize Lucide icons - FIXED: Re-initialize after dynamic content changes
             useEffect(() => {
-                if (window.lucide) {
-                    window.lucide.createIcons();
-                }
+                const initializeIcons = () => {
+                    if (window.lucide) {
+                        window.lucide.createIcons();
+                    }
+                };
+                
+                initializeIcons();
+                
+                // Re-initialize icons when content changes
+                const observer = new MutationObserver(initializeIcons);
+                observer.observe(document.getElementById('root'), {
+                    childList: true,
+                    subtree: true
+                });
+                
+                return () => observer.disconnect();
             }, []);
 
             // Check for saved session
@@ -230,8 +246,11 @@
             };
 
             const addNewProduct = () => {
+                const tempId = `temp-${Date.now()}`;
+                tempIdTracker.current.add(tempId);
+                
                 const newProduct = {
-                    id: `temp-${Date.now()}`,
+                    id: tempId,
                     title: 'New Product',
                     category: 'Actuation',
                     price: 0,
@@ -249,6 +268,7 @@
                     // Skip if it's a temporary product
                     if (id.toString().startsWith('temp-')) {
                         setProducts(products.filter(p => p.id !== id));
+                        tempIdTracker.current.delete(id);
                         if (editingProduct === id) setEditingProduct(null);
                         return;
                     }
@@ -304,21 +324,23 @@
 
                 try {
                     let savedProducts = 0;
+                    const updatedProducts = [...products];
 
-                    // Save products to Supabase
+                    // Save products to Supabase - FIXED: Prevent race condition
                     if (supabase && supabaseStatus === 'connected') {
-                        for (const product of products) {
+                        for (let i = 0; i < updatedProducts.length; i++) {
+                            const product = updatedProducts[i];
                             const productData = {
                                 title: product.title,
                                 price: product.price,
                                 image: product.image,
                                 description: product.description,
-                                category: product.category,
+                                category: product.category || 'Actuation', // FIXED: Ensure category is always defined
                                 amazon_link: product.amazon_link || '',
                                 flipkart_link: product.flipkart_link || ''
                             };
 
-                            if (product.id.toString().startsWith('temp-')) {
+                            if (product.id.toString().startsWith('temp-') && tempIdTracker.current.has(product.id)) {
                                 // New product - insert
                                 const { data, error } = await supabase
                                     .from('products')
@@ -331,12 +353,11 @@
                                     setDebugInfo('Product insert error: ' + error.message);
                                 } else if (data) {
                                     // Update local ID with the real UUID from Supabase
-                                    setProducts(prev => prev.map(p => 
-                                        p.id === product.id ? { ...data } : p
-                                    ));
+                                    updatedProducts[i] = { ...data };
+                                    tempIdTracker.current.delete(product.id);
                                     savedProducts++;
                                 }
-                            } else {
+                            } else if (!product.id.toString().startsWith('temp-')) {
                                 // Existing product - update
                                 const { error } = await supabase
                                     .from('products')
@@ -352,6 +373,9 @@
                             }
                         }
 
+                        // Update state with cleaned products (no temp IDs)
+                        setProducts(updatedProducts.filter(p => !p.id.toString().startsWith('temp-') || !tempIdTracker.current.has(p.id)));
+
                         // Save settings to Supabase
                         await saveSettingsToSupabase(settingsToSave);
                         
@@ -361,7 +385,7 @@
                     // Always save to localStorage as backup
                     localStorage.setItem('robotechniqueSettings', JSON.stringify(settingsToSave));
                     localStorage.setItem('robotechniqueData', JSON.stringify({
-                        products,
+                        products: updatedProducts.filter(p => !p.id.toString().startsWith('temp-') || !tempIdTracker.current.has(p.id)),
                         settings: settingsToSave,
                         lastUpdated: new Date().toISOString()
                     }));
@@ -416,6 +440,7 @@
                     
                     // Reset local state
                     setProducts([]);
+                    tempIdTracker.current.clear();
                     const defaultSettings = getDefaultSettings();
                     setFreeShippingThreshold(defaultSettings.freeShippingThreshold);
                     setShippingCost(defaultSettings.shippingCost);
@@ -427,6 +452,17 @@
                     localStorage.removeItem('robotechniqueSettings');
                     
                     setDebugInfo('Data reset to defaults');
+                    
+                    // FIXED: Reload data after reset
+                    setTimeout(() => {
+                        loadInitialData().then(data => {
+                            setProducts(data.products);
+                            setFreeShippingThreshold(data.settings.freeShippingThreshold);
+                            setShippingCost(data.settings.shippingCost);
+                            setWhatsappNumber(data.settings.whatsappNumber);
+                            setAmazonLink(data.settings.amazonLink);
+                        });
+                    }, 500);
                 }
             };
 
