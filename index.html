@@ -251,36 +251,6 @@
             background: #0284c7;
         }
          
-        /* NEW: Mobile grid for 2 rows */
-        @media (max-width: 767px) {
-            .mobile-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-        
-            .mobile-grid .product-card {
-                padding: 1rem;
-            }
-        
-            .mobile-grid .product-image {
-                height: 120px;
-            }
-        
-            .mobile-grid .product-title {
-                font-size: 0.875rem;
-                line-height: 1.2;
-            }
-        
-            .mobile-grid .product-price {
-                font-size: 1.125rem;
-            }
-        
-            .mobile-grid .product-button {
-                padding: 0.5rem;
-                font-size: 0.75rem;
-            }
-        }
-
         /* NEW: Trusted Sites Dropdown Styles */
         .trusted-sites-dropdown {
             position: relative;
@@ -722,7 +692,7 @@
                 </div>
 
                 <!-- UPDATED: Mobile grid with 2 columns for 2 rows view -->
-                <div class="grid mobile-grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8" id="products-grid">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" id="products-grid">
                     <!-- Product skeleton cards -->
                     <div class="bg-white product-card rounded-2xl p-4 md:p-6 shadow-xl border border-gray-100">
                         <div class="skeleton skeleton-image product-image"></div>
