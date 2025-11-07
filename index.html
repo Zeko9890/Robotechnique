@@ -92,12 +92,47 @@
             transform: translateY(0);
         }
 
-        .product-card-hover {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        /* FIXED: Enhanced Product Card Hover Effects */
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
         }
-        .product-card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(255, 127, 80, 0.1), 0 8px 10px -6px rgba(255, 127, 80, 0.1);
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 8px;
+            padding: 2px;
+            background: linear-gradient(135deg, #f97316, #0ea5e9, #8b5cf6);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 20px 25px -5px rgba(249, 115, 22, 0.3),
+                0 10px 10px -5px rgba(249, 115, 22, 0.2),
+                0 0 30px rgba(14, 165, 233, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
         }
 
         /* Custom Logo Styling */
@@ -504,22 +539,6 @@
             grid-template-columns: repeat(2, 1fr);
         }
 
-        .product-card {
-            background: white;
-            border-radius: 8px;
-            padding: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .product-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
         .product-image-container {
             height: 140px;
             background: #f9fafb;
@@ -529,6 +548,12 @@
             padding: 8px;
             border-radius: 6px;
             margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover .product-image-container {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #fef3e2, #f0f9ff);
         }
 
         .product-image {
@@ -536,6 +561,11 @@
             height: 100%;
             object-fit: contain;
             border-radius: 4px;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.1);
         }
 
         .product-category {
@@ -544,6 +574,11 @@
             font-weight: 600;
             text-transform: uppercase;
             margin-bottom: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .product-card:hover .product-category {
+            color: #f97316;
         }
 
         .product-title {
@@ -557,23 +592,35 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             height: 2.6em;
+            transition: color 0.3s ease;
         }
 
+        .product-card:hover .product-title {
+            color: #0ea5e9;
+        }
+
+        /* FIXED: Read More Functionality */
         .product-description {
             font-size: 0.75rem;
             color: #6b7280;
             line-height: 1.3;
             margin-bottom: 8px;
             position: relative;
+            transition: color 0.3s ease;
+            overflow: hidden;
         }
 
         .product-description.collapsed {
             max-height: 2.6em;
-            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         .product-description.expanded {
             max-height: none;
+            display: block;
+            -webkit-line-clamp: unset;
         }
 
         .read-more-btn {
@@ -586,11 +633,17 @@
             padding: 0;
             margin-top: 4px;
             display: inline-block;
+            transition: all 0.3s ease;
         }
 
         .read-more-btn:hover {
             color: #0284c7;
             text-decoration: underline;
+            transform: translateX(2px);
+        }
+
+        .read-more-btn.hidden {
+            display: none;
         }
 
         .product-price {
@@ -598,6 +651,11 @@
             font-weight: 700;
             color: #1f2937;
             margin-bottom: 8px;
+            transition: color 0.3s ease;
+        }
+
+        .product-card:hover .product-price {
+            color: #f97316;
         }
 
         .product-actions {
@@ -617,10 +675,29 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .add-to-cart-btn-mobile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
         }
 
         .add-to-cart-btn-mobile:hover {
             background: #ea580c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+        }
+
+        .add-to-cart-btn-mobile:hover::before {
+            left: 100%;
         }
 
         .trusted-sites-button-mobile {
@@ -633,6 +710,12 @@
             font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.3s ease;
+        }
+
+        .trusted-sites-button-mobile:hover {
+            background: #f3f4f6;
+            border-color: #0ea5e9;
+            color: #0ea5e9;
         }
 
         /* Responsive grid */
@@ -1165,7 +1248,7 @@
             }
         }
 
-        // NEW: Toggle Read More functionality
+        // FIXED: Toggle Read More functionality
         function toggleReadMore(productId) {
             const description = document.getElementById(`description-${productId}`);
             const button = document.getElementById(`read-more-btn-${productId}`);
@@ -1183,15 +1266,43 @@
             }
         }
 
-        // NEW: Check if description needs "Read More" button
+        // FIXED: Check if description needs "Read More" button
         function needsReadMore(descriptionElement) {
             if (!descriptionElement) return false;
             
-            // Check if the content exceeds 2 lines (approximately 2.6em height)
+            // Reset to get accurate measurements
+            descriptionElement.style.display = 'block';
+            descriptionElement.style.maxHeight = 'none';
+            descriptionElement.style.webkitLineClamp = 'unset';
+            
             const lineHeight = parseFloat(getComputedStyle(descriptionElement).lineHeight);
             const maxHeight = lineHeight * 2;
+            const needsMore = descriptionElement.scrollHeight > maxHeight;
             
-            return descriptionElement.scrollHeight > maxHeight;
+            // Restore collapsed state
+            descriptionElement.classList.add('collapsed');
+            descriptionElement.classList.remove('expanded');
+            
+            return needsMore;
+        }
+
+        // FIXED: Initialize Read More buttons after products are rendered
+        function initializeReadMoreButtons() {
+            products.forEach(product => {
+                const descriptionElement = document.getElementById(`description-${product.id}`);
+                const buttonElement = document.getElementById(`read-more-btn-${product.id}`);
+                
+                if (descriptionElement && buttonElement) {
+                    // Check if this description needs a read more button
+                    const shouldShowButton = needsReadMore(descriptionElement);
+                    
+                    if (!shouldShowButton) {
+                        buttonElement.classList.add('hidden');
+                    } else {
+                        buttonElement.classList.remove('hidden');
+                    }
+                }
+            });
         }
 
         // NEW: Render actual content with fade-in animation
@@ -1661,7 +1772,7 @@
                     <div class="product-description collapsed" id="description-${product.id}">
                         ${product.description || 'High-quality component for your projects.'}
                     </div>
-                    <button class="read-more-btn" id="read-more-btn-${product.id}" onclick="toggleReadMore('${product.id}')">Read More</button>
+                    <button class="read-more-btn hidden" id="read-more-btn-${product.id}" onclick="toggleReadMore('${product.id}')">Read More</button>
                     
                     <div class="product-price">${formatINR(product.price)}</div>
                     
@@ -1719,19 +1830,8 @@
                 window.lucide.createIcons();
             }
 
-            // Check which descriptions need "Read More" buttons
-            setTimeout(() => {
-                products.forEach(product => {
-                    const descriptionElement = document.getElementById(`description-${product.id}`);
-                    const buttonElement = document.getElementById(`read-more-btn-${product.id}`);
-                    
-                    if (descriptionElement && buttonElement) {
-                        if (!needsReadMore(descriptionElement)) {
-                            buttonElement.style.display = 'none';
-                        }
-                    }
-                });
-            }, 100);
+            // Initialize Read More buttons after a short delay to ensure DOM is ready
+            setTimeout(initializeReadMoreButtons, 100);
         }
 
         // Helper function to safely update browse button
