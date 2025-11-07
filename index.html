@@ -496,6 +496,169 @@
         .content-fade-in {
             animation: contentFadeIn 0.6s ease-out forwards;
         }
+                /* Amazon-like Product Grid for Mobile */
+        .products-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image-container {
+            height: 140px;
+            background: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .product-category {
+            font-size: 0.7rem;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .product-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1f2937;
+            line-height: 1.3;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.6em;
+        }
+
+        .product-description {
+            font-size: 0.75rem;
+            color: #6b7280;
+            line-height: 1.3;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.6em;
+        }
+
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .product-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .add-to-cart-btn-mobile {
+            width: 100%;
+            padding: 8px 12px;
+            background: #f97316;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart-btn-mobile:hover {
+            background: #ea580c;
+        }
+
+        .trusted-sites-button-mobile {
+            width: 100%;
+            padding: 6px 10px;
+            background: #f9fafb;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* Responsive grid */
+        @media (min-width: 640px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+            
+            .product-card {
+                padding: 16px;
+            }
+            
+            .product-image-container {
+                height: 160px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .products-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1.5rem;
+            }
+            
+            .product-card {
+                padding: 20px;
+            }
+            
+            .product-image-container {
+                height: 180px;
+            }
+            
+            .product-title {
+                font-size: 1rem;
+            }
+            
+            .product-description {
+                font-size: 0.875rem;
+            }
+            
+            .add-to-cart-btn-mobile {
+                padding: 10px 16px;
+                font-size: 0.875rem;
+            }
+        }
 
         @keyframes contentFadeIn {
             0% {
@@ -1419,11 +1582,11 @@
                 if (window.lucide && window.lucide.createIcons) {
                     window.lucide.createIcons();
                 }
-                
-                // Update browse button if it exists
-                updateBrowseButton();
                 return;
             }
+
+            // Update the grid class for mobile
+            productsGrid.className = 'products-grid';
 
             productsGrid.innerHTML = products.map(product => {
                 const hasAmazonLink = product.amazon_link && product.amazon_link.trim() !== '';
@@ -1431,24 +1594,23 @@
                 const hasAnyTrustedLink = hasAmazonLink || hasFlipkartLink;
 
                 return `
-                <div class="bg-white product-card-hover rounded-2xl p-6 shadow-xl border border-gray-100 hover:border-orange-200 scroll-fade-in content-fade-in">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center p-4 rounded-xl mb-4 overflow-hidden">
+                <div class="product-card scroll-fade-in content-fade-in">
+                    <div class="product-image-container">
                         <img src="${product.image || 'https://placehold.co/400x300/eeeeee/333333?text=Product+Image'}" 
                              alt="${product.title || 'Product'}" 
-                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                             class="product-image"
                              onerror="this.src='https://placehold.co/400x300/eeeeee/333333?text=Product+Image'">
                     </div>
-                    <span class="text-xs font-semibold text-sky-500 uppercase tracking-wider mb-1 block">${product.category || 'General'}</span>
-                    <h3 class="text-xl font-bold mb-2 truncate text-gray-800">${product.title || 'Untitled Product'}</h3>
-                    <p class="text-gray-500 mb-4 text-sm">${product.description || 'Modular, high-speed unit designed for seamless integration.'}</p>
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-3xl font-extrabold text-gray-900">${formatINR(product.price)}</span>
-                    </div>
                     
-                    <div class="flex flex-col space-y-2">
-                        <button onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')}, this)" class="add-to-cart-btn w-full flex items-center justify-center py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition duration-300 shadow-lg shadow-orange-300/50 relative overflow-hidden">
-                            <span class="relative z-10">Add to Cart</span>
-                            <div class="absolute inset-0 bg-green-500 transform scale-x-0 transition-transform duration-300 origin-left"></div>
+                    <div class="product-category">${product.category || 'General'}</div>
+                    <h3 class="product-title">${product.title || 'Untitled Product'}</h3>
+                    <p class="product-description">${product.description || 'High-quality component for your projects.'}</p>
+                    
+                    <div class="product-price">${formatINR(product.price)}</div>
+                    
+                    <div class="product-actions">
+                        <button onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')}, this)" class="add-to-cart-btn-mobile">
+                            Add to Cart
                         </button>
                         
                         ${hasAnyTrustedLink ? `
@@ -1456,52 +1618,45 @@
                             <button 
                                 id="trusted-sites-button-${product.id}"
                                 onclick="toggleTrustedSites('${product.id}')" 
-                                class="trusted-sites-button w-full flex items-center justify-between py-2 px-3 text-sm bg-gray-50 text-gray-700 rounded-xl font-medium hover:bg-gray-100 transition duration-300 border border-gray-300"
+                                class="trusted-sites-button-mobile"
                             >
-                                <div class="flex items-center">
-                                    <span>Other Trusted Sites</span>
-                                    <span class="ml-1">✅</span>
+                                <div class="flex items-center justify-between">
+                                    <span>Other Sites</span>
+                                    <svg class="w-3 h-3 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
                                 </div>
-                                <svg class="w-4 h-4 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
                             </button>
                             
                             <div id="trusted-sites-${product.id}" class="trusted-sites-dropdown-content mt-1 space-y-1 transition-all duration-300 ease-in-out">
                                 ${hasAmazonLink ? `
-                                <a href="${product.amazon_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-3 text-xs bg-white text-gray-700 rounded-lg border border-gray-200 hover:border-orange-300">
-                                    <svg class="w-4 h-4 mr-2 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
+                                <a href="${product.amazon_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-2 text-xs bg-white text-gray-700 rounded border border-gray-200 hover:border-orange-300">
+                                    <svg class="w-3 h-3 mr-2 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M10.605 2.4c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636zm-.322 13.91l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077zm3.111-3.111l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077z"/>
                                     </svg>
-                                    Buy on Amazon
+                                    Amazon
                                 </a>
                                 ` : ''}
                                 
                                 ${hasFlipkartLink ? `
-                                <a href="${product.flipkart_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-3 text-xs bg-white text-blue-600 rounded-lg border border-gray-200 hover:border-blue-400">
-                                    <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                <a href="${product.flipkart_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-2 text-xs bg-white text-blue-600 rounded border border-gray-200 hover:border-blue-400">
+                                    <svg class="w-3 h-3 mr-2" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                                     </svg>
-                                    Buy on Flipkart
+                                    Flipkart
                                 </a>
                                 ` : ''}
                             </div>
                         </div>
                         ` : `
-                        <a href="${getAmazonLink()}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center py-2 text-sm bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition duration-300 border border-gray-300">
-                            <svg class='w-4 h-4 mr-2' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M11.969 2.146c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636zm-.322 13.91l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077zm3.111-3.111l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077z" fill="#FF9900"/>
-                            </svg>
-                            Buy on Amazon (Verified Seller)
+                        <a href="${getAmazonLink()}" target="_blank" rel="noopener noreferrer" class="trusted-sites-button-mobile text-center">
+                            Buy on Amazon
                         </a>
                         `}
                     </div>
                 </div>
             `}).join('');
 
-            // Update browse button
-            updateBrowseButton();
-            
             // Re-initialize Lucide icons
             if (window.lucide && window.lucide.createIcons) {
                 window.lucide.createIcons();
