@@ -92,47 +92,12 @@
             transform: translateY(0);
         }
 
-        /* FIXED: Enhanced Product Card Hover Effects */
-        .product-card {
-            background: white;
-            border-radius: 8px;
-            padding: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
+        .product-card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
-        .product-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border-radius: 8px;
-            padding: 2px;
-            background: linear-gradient(135deg, #f97316, #0ea5e9, #8b5cf6);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .product-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 
-                0 20px 25px -5px rgba(249, 115, 22, 0.3),
-                0 10px 10px -5px rgba(249, 115, 22, 0.2),
-                0 0 30px rgba(14, 165, 233, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        }
-
-        .product-card:hover::before {
-            opacity: 1;
+        .product-card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(255, 127, 80, 0.1), 0 8px 10px -6px rgba(255, 127, 80, 0.1);
         }
 
         /* Custom Logo Styling */
@@ -539,6 +504,22 @@
             grid-template-columns: repeat(2, 1fr);
         }
 
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
         .product-image-container {
             height: 140px;
             background: #f9fafb;
@@ -548,12 +529,6 @@
             padding: 8px;
             border-radius: 6px;
             margin-bottom: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .product-card:hover .product-image-container {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, #fef3e2, #f0f9ff);
         }
 
         .product-image {
@@ -561,11 +536,6 @@
             height: 100%;
             object-fit: contain;
             border-radius: 4px;
-            transition: transform 0.3s ease;
-        }
-
-        .product-card:hover .product-image {
-            transform: scale(1.1);
         }
 
         .product-category {
@@ -574,11 +544,6 @@
             font-weight: 600;
             text-transform: uppercase;
             margin-bottom: 4px;
-            transition: color 0.3s ease;
-        }
-
-        .product-card:hover .product-category {
-            color: #f97316;
         }
 
         .product-title {
@@ -592,35 +557,23 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             height: 2.6em;
-            transition: color 0.3s ease;
         }
 
-        .product-card:hover .product-title {
-            color: #0ea5e9;
-        }
-
-        /* FIXED: Read More Functionality */
         .product-description {
             font-size: 0.75rem;
             color: #6b7280;
             line-height: 1.3;
             margin-bottom: 8px;
             position: relative;
-            transition: color 0.3s ease;
-            overflow: hidden;
         }
 
         .product-description.collapsed {
             max-height: 2.6em;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .product-description.expanded {
             max-height: none;
-            display: block;
-            -webkit-line-clamp: unset;
         }
 
         .read-more-btn {
@@ -633,17 +586,11 @@
             padding: 0;
             margin-top: 4px;
             display: inline-block;
-            transition: all 0.3s ease;
         }
 
         .read-more-btn:hover {
             color: #0284c7;
             text-decoration: underline;
-            transform: translateX(2px);
-        }
-
-        .read-more-btn.hidden {
-            display: none;
         }
 
         .product-price {
@@ -651,11 +598,6 @@
             font-weight: 700;
             color: #1f2937;
             margin-bottom: 8px;
-            transition: color 0.3s ease;
-        }
-
-        .product-card:hover .product-price {
-            color: #f97316;
         }
 
         .product-actions {
@@ -675,29 +617,10 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .add-to-cart-btn-mobile::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s;
         }
 
         .add-to-cart-btn-mobile:hover {
             background: #ea580c;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
-        }
-
-        .add-to-cart-btn-mobile:hover::before {
-            left: 100%;
         }
 
         .trusted-sites-button-mobile {
@@ -710,12 +633,6 @@
             font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-
-        .trusted-sites-button-mobile:hover {
-            background: #f3f4f6;
-            border-color: #0ea5e9;
-            color: #0ea5e9;
         }
 
         /* Responsive grid */
@@ -1112,7 +1029,7 @@
                     <a href="https://www.instagram.com/YOURCLIENTINSTAGRAM" target="_blank" aria-label="Instagram">
                         <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" />
                     </a>
-                    <a href="https://whatsapp.com/channel/0029Vb6MQB7BKfi9WI2Ypn1h" target="_blank" aria-label="WhatsApp">
+                    <a href="https://wa.me/YOURCLIENTNUMBER" target="_blank" aria-label="WhatsApp">
                         <img src="https://cdn-icons-png.flaticon.com/512/2111/2111728.png" alt="WhatsApp" />
                     </a>
                 </div>
@@ -1209,6 +1126,12 @@
                 alert("Contact form is not ready yet. Please try again in a moment.");
                 return;
             }
+
+            const name = nameInput.value.trim() || '';
+            const email = emailInput.value.trim() || '';
+            const message = messageInput.value.trim() || '';
+            const adminEmail = "robotechnique.team@gmail.com";
+
             if (!name || !email || !message) {
                 alert("Please fill out all fields before submitting!");
                 return;
@@ -1242,7 +1165,7 @@
             }
         }
 
-        // FIXED: Toggle Read More functionality
+        // NEW: Toggle Read More functionality
         function toggleReadMore(productId) {
             const description = document.getElementById(`description-${productId}`);
             const button = document.getElementById(`read-more-btn-${productId}`);
@@ -1260,191 +1183,16 @@
             }
         }
 
-        // ... (keep all your existing code above this line)
-
-    // FIXED: Check if description needs "Read More" button
-    function needsReadMore(descriptionElement) {
-        if (!descriptionElement) return false;
-        
-        // Create a temporary clone to measure the actual content height
-        const tempElement = descriptionElement.cloneNode(true);
-        tempElement.style.cssText = `
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
-            width: ${descriptionElement.offsetWidth}px;
-            max-height: none;
-            display: block;
-            -webkit-line-clamp: unset;
-            opacity: 0;
-            pointer-events: none;
-        `;
-        document.body.appendChild(tempElement);
-        
-        const lineHeight = parseFloat(getComputedStyle(descriptionElement).lineHeight);
-        const maxHeight = lineHeight * 2;
-        const actualHeight = tempElement.scrollHeight;
-        
-        // Clean up
-        document.body.removeChild(tempElement);
-        
-        return actualHeight > maxHeight;
-    }
-
-    // FIXED: Initialize Read More buttons after products are rendered
-    function initializeReadMoreButtons() {
-        if (!products || products.length === 0) return;
-        
-        products.forEach(product => {
-            const descriptionElement = document.getElementById(`description-${product.id}`);
-            const buttonElement = document.getElementById(`read-more-btn-${product.id}`);
+        // NEW: Check if description needs "Read More" button
+        function needsReadMore(descriptionElement) {
+            if (!descriptionElement) return false;
             
-            if (descriptionElement && buttonElement) {
-                // Add a small delay to ensure DOM is fully rendered
-                setTimeout(() => {
-                    const shouldShowButton = needsReadMore(descriptionElement);
-                    
-                    if (!shouldShowButton) {
-                        buttonElement.classList.add('hidden');
-                    } else {
-                        buttonElement.classList.remove('hidden');
-                        // Ensure it starts in collapsed state
-                        descriptionElement.classList.add('collapsed');
-                        descriptionElement.classList.remove('expanded');
-                        buttonElement.textContent = 'Read More';
-                    }
-                }, 50);
-            }
-        });
-    }
-
-    // FIXED: Toggle Read More functionality
-    function toggleReadMore(productId) {
-        const description = document.getElementById(`description-${productId}`);
-        const button = document.getElementById(`read-more-btn-${productId}`);
-        
-        if (description && button) {
-            if (description.classList.contains('collapsed')) {
-                description.classList.remove('collapsed');
-                description.classList.add('expanded');
-                button.textContent = 'Read Less';
-            } else {
-                description.classList.remove('expanded');
-                description.classList.add('collapsed');
-                button.textContent = 'Read More';
-            }
+            // Check if the content exceeds 2 lines (approximately 2.6em height)
+            const lineHeight = parseFloat(getComputedStyle(descriptionElement).lineHeight);
+            const maxHeight = lineHeight * 2;
+            
+            return descriptionElement.scrollHeight > maxHeight;
         }
-    }
-
-    // FIXED: Render Products function - ensure read more buttons are properly initialized
-    function renderProducts() {
-        if (!productsGrid) return;
-
-        if (!products || products.length === 0) {
-            productsGrid.innerHTML = `
-                <div class="col-span-4 text-center py-12 content-fade-in">
-                    <i data-lucide="package" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
-                    <p class="text-gray-600 text-lg">No products available at the moment.</p>
-                    <p class="text-gray-500 text-sm">Please check back later.</p>
-                </div>
-            `;
-            if (window.lucide && window.lucide.createIcons) {
-                window.lucide.createIcons();
-            }
-            return;
-        }
-
-        // Update the grid class for mobile
-        productsGrid.className = 'products-grid';
-
-        productsGrid.innerHTML = products.map(product => {
-            const hasAmazonLink = product.amazon_link && product.amazon_link.trim() !== '';
-            const hasFlipkartLink = product.flipkart_link && product.flipkart_link.trim() !== '';
-            const hasAnyTrustedLink = hasAmazonLink || hasFlipkartLink;
-
-            return `
-            <div class="product-card scroll-fade-in content-fade-in">
-                <div class="product-image-container">
-                    <img src="${product.image || 'https://placehold.co/400x300/eeeeee/333333?text=Product+Image'}" 
-                         alt="${product.title || 'Product'}" 
-                         class="product-image"
-                         onerror="this.src='https://placehold.co/400x300/eeeeee/333333?text=Product+Image'">
-                </div>
-                
-                <div class="product-category">${product.category || 'General'}</div>
-                <h3 class="product-title">${product.title || 'Untitled Product'}</h3>
-                <div class="product-description collapsed" id="description-${product.id}">
-                    ${product.description || 'High-quality component for your projects.'}
-                </div>
-                <button class="read-more-btn" id="read-more-btn-${product.id}" onclick="toggleReadMore('${product.id}')" style="display: none;">Read More</button>
-    
-                <div class="product-price">${formatINR(product.price)}</div>
-                
-                <div class="product-actions">
-                    <button onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')}, this)" class="add-to-cart-btn-mobile">
-                        Add to Cart
-                    </button>
-                    
-                    ${hasAnyTrustedLink ? `
-                    <div class="trusted-sites-dropdown">
-                        <button 
-                            id="trusted-sites-button-${product.id}"
-                            onclick="toggleTrustedSites('${product.id}')" 
-                            class="trusted-sites-button-mobile"
-                        >
-                            <div class="flex items-center justify-between">
-                                <span>Other Sites</span>
-                                <svg class="w-3 h-3 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </button>
-                        
-                        <div id="trusted-sites-${product.id}" class="trusted-sites-dropdown-content mt-1 space-y-1 transition-all duration-300 ease-in-out">
-                            ${hasAmazonLink ? `
-                            <a href="${product.amazon_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-2 text-xs bg-white text-gray-700 rounded border border-gray-200 hover:border-orange-300">
-                                <svg class="w-3 h-3 mr-2 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M10.605 2.4c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636zm-.322 13.91l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077zm3.111-3.111l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077z"/>
-                                </svg>
-                                Amazon
-                            </a>
-                            ` : ''}
-                            
-                            ${hasFlipkartLink ? `
-                            <a href="${product.flipkart_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-2 text-xs bg-white text-blue-600 rounded border border-gray-200 hover:border-blue-400">
-                                <svg class="w-3 h-3 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                                </svg>
-                                Flipkart
-                            </a>
-                            ` : ''}
-                        </div>
-                    </div>
-                    ` : `
-                    <a href="${getAmazonLink()}" target="_blank" rel="noopener noreferrer" class="trusted-sites-button-mobile text-center">
-                        Buy on Amazon
-                    </a>
-                    `}
-                </div>
-            </div>
-        `}).join('');
-
-        // Re-initialize Lucide icons
-        if (window.lucide && window.lucide.createIcons) {
-            window.lucide.createIcons();
-        }
-
-        // Initialize Read More buttons after DOM is fully rendered
-        setTimeout(initializeReadMoreButtons, 200);
-    }
-
-    // ... (keep all your existing code below this line)
-
-            const name = nameInput.value.trim() || '';
-            const email = emailInput.value.trim() || '';
-            const message = messageInput.value.trim() || '';
-            const adminEmail = "robotechnique.team@gmail.com";
-
 
         // NEW: Render actual content with fade-in animation
         function renderActualContent() {
@@ -1494,7 +1242,7 @@
                                     <div>
                                         <h3 class="text-xl font-bold text-gray-800">Seamless Integration</h3>
                                         <p class="mt-1 text-gray-600">Designed for open standards with plug-and-play compatibility across popular platforms.</p>
-                                
+                                    </div>
                                 </div>
                             </div>
                             <div class="scroll-fade-in content-fade-in">
@@ -1913,7 +1661,8 @@
                     <div class="product-description collapsed" id="description-${product.id}">
                         ${product.description || 'High-quality component for your projects.'}
                     </div>
-                       <button class="read-more-btn" id="read-more-btn-${product.id}" onclick="toggleReadMore('${product.id}')" style="display: none;">Read More</button>
+                    <button class="read-more-btn" id="read-more-btn-${product.id}" onclick="toggleReadMore('${product.id}')">Read More</button>
+                    
                     <div class="product-price">${formatINR(product.price)}</div>
                     
                     <div class="product-actions">
@@ -1970,8 +1719,19 @@
                 window.lucide.createIcons();
             }
 
-            // Initialize Read More buttons after a short delay to ensure DOM is ready
-            setTimeout(initializeReadMoreButtons, 100);
+            // Check which descriptions need "Read More" buttons
+            setTimeout(() => {
+                products.forEach(product => {
+                    const descriptionElement = document.getElementById(`description-${product.id}`);
+                    const buttonElement = document.getElementById(`read-more-btn-${product.id}`);
+                    
+                    if (descriptionElement && buttonElement) {
+                        if (!needsReadMore(descriptionElement)) {
+                            buttonElement.style.display = 'none';
+                        }
+                    }
+                });
+            }, 100);
         }
 
         // Helper function to safely update browse button
