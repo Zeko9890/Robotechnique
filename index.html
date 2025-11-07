@@ -513,21 +513,33 @@
             position: relative;
             z-index: 20 !important;
             background-color: #2e2d2d !important;
+            padding: 20px 0 10px 0;
         }
 
         .footer-container {
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px 40px 15px 40px;
+            background-color: #2e2d2d;
+            border-top: 1px solid #444;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer-main-content {
+            display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 25px 40px;
-            background-color: #2e2d2d;
-            border-top: 1px solid #2e2d2d;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
-            flex-wrap: wrap;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            display: flex;
         }
 
         .footer-links a {
-            margin: 0 15px;
+            margin: 0 25px;
             color: #c8ced8;
             text-decoration: none;
             font-weight: 500;
@@ -543,42 +555,45 @@
             align-items: center;
         }
 
+        .social-icons a {
+            margin: 0 20px;
+        }
+
         .social-icons a img {
-            width: 36px;
-            height: 36px;
-            margin: 0 8px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .social-icons a img:hover {
-            transform: scale(1.12);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         }
-        
+
         .footer-copyright {
             text-align: center;
-            color: #6b7280;
+            color: #9ca3af;
             font-size: 0.875rem;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #f3f4f6;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #444;
             width: 100%;
         }
 
         @media (max-width: 640px) {
             .footer-main-content {
                 flex-direction: column;
-                gap: 20px;
+                gap: 25px;
             }
             
-            .footer-links {
-                gap: 100px;
+            .footer-links a {
+                margin: 0 15px;
             }
             
-            .social-icons {
-                gap: 100px;
+            .social-icons a {
+                margin: 0 15px;
             }
         }
     </style>
@@ -816,35 +831,37 @@
     </main>
 
     <!-- NEW: Modern Footer -->
+        <!-- NEW: Modern Footer -->
     <footer class="footer">
         <div class="footer-container">
-            <!-- Left side social icons -->
-            <div class="social-icons">
-                <a href="https://www.instagram.com/YOURCLIENTINSTAGRAM" target="_blank" aria-label="Instagram">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" />
-                </a>
-                <a href="https://wa.me/YOURCLIENTNUMBER" target="_blank" aria-label="WhatsApp">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111728.png" alt="WhatsApp" />
-                </a>
-            </div>
+            <div class="footer-main-content">
+                <!-- Left side social icons -->
+                <div class="social-icons">
+                    <a href="https://www.instagram.com/YOURCLIENTINSTAGRAM" target="_blank" aria-label="Instagram">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" />
+                    </a>
+                    <a href="https://wa.me/YOURCLIENTNUMBER" target="_blank" aria-label="WhatsApp">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2111/2111728.png" alt="WhatsApp" />
+                    </a>
+                </div>
 
-            <!-- Center links -->
-            <div class="footer-links">
-                <a href="#" class="text-gray-700 hover:text-orange-500 transition-colors duration-200">Terms</a>
-                <a href="#" class="text-gray-700 hover:text-orange-500 transition-colors duration-200">Privacy</a>
-                <a href="#" class="text-gray-700 hover:text-orange-500 transition-colors duration-200">Careers</a>
-            </div>
+                <!-- Center links -->
+                <div class="footer-links">
+                    <a href="#">Terms</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Careers</a>
+                </div>
 
-            <!-- Right side social icons -->
-            <div class="social-icons">
-                <a href="https://www.youtube.com/YOURCLIENTCHANNEL" target="_blank" aria-label="YouTube">
-                    <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" />
-                </a>
-                <a href="https://www.facebook.com/YOURCLIENTPAGE" target="_blank" aria-label="Facebook">
-                    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" />
-                </a>
+                <!-- Right side social icons -->
+                <div class="social-icons">
+                    <a href="https://www.youtube.com/YOURCLIENTCHANNEL" target="_blank" aria-label="YouTube">
+                        <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" />
+                    </a>
+                    <a href="https://www.facebook.com/YOURCLIENTPAGE" target="_blank" aria-label="Facebook">
+                        <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" />
+                    </a>
+                </div>
             </div>
-        </div>
             
             <!-- Copyright section -->
             <div class="footer-copyright">
