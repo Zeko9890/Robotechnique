@@ -1171,6 +1171,45 @@
             font-weight: 700;
             color: #f97316;
         }
+        /* Legal Modal Styles */
+.legal-content {
+    line-height: 1.6;
+    color: #374151;
+}
+
+.legal-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 2rem 0 1rem 0;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.legal-content h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 1.5rem 0 0.75rem 0;
+}
+
+.legal-content p {
+    margin-bottom: 1rem;
+}
+
+.legal-content ul, .legal-content ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.legal-content li {
+    margin-bottom: 0.5rem;
+}
+
+.legal-content strong {
+    font-weight: 600;
+    color: #1f2937;
+}
     </style>
 
     <!-- Google Font (Inter) -->
@@ -1535,11 +1574,12 @@
             </div>
             
             <!-- Policy Links -->
+            <!-- Policy Links -->
             <div class="flex flex-wrap justify-center space-x-4">
-                <a href="#" class="footer-link text-gray-400 hover:text-white text-sm">Terms of Service</a>
-                <a href="#" class="footer-link text-gray-400 hover:text-white text-sm">Privacy Policy</a>
-                <a href="#" class="footer-link text-gray-400 hover:text-white text-sm">Cookie Policy</a>
-                <a href="#" class="footer-link text-gray-400 hover:text-white text-sm">Sitemap</a>
+                <a href="javascript:void(0)" onclick="openLegalPage('terms')" class="footer-link text-gray-400 hover:text-white text-sm">Terms of Service</a>
+                <a href="javascript:void(0)" onclick="openLegalPage('privacy')" class="footer-link text-gray-400 hover:text-white text-sm">Privacy Policy</a>
+                <a href="javascript:void(0)" onclick="openLegalPage('cookie')" class="footer-link text-gray-400 hover:text-white text-sm">Cookie Policy</a>
+                <a href="javascript:void(0)" onclick="openLegalPage('sitemap')" class="footer-link text-gray-400 hover:text-white text-sm">Sitemap</a>
             </div>
         </div>
     </div>
@@ -1655,7 +1695,198 @@ function handleNewsletterSubscription(event) {
     // Clear the input
     emailInput.value = '';
 }
+// Legal Pages Modal Functions
+function openLegalPage(page) {
+    const modal = document.getElementById('legal-modal');
+    const title = document.getElementById('legal-modal-title');
+    const content = document.getElementById('legal-modal-content');
+    
+    if (!modal || !title || !content) return;
+    
+    // Set content based on the page
+    switch(page) {
+        case 'terms':
+            title.textContent = 'Terms of Service';
+            content.innerHTML = getTermsContent();
+            break;
+        case 'privacy':
+            title.textContent = 'Privacy Policy';
+            content.innerHTML = getPrivacyContent();
+            break;
+        case 'cookie':
+            title.textContent = 'Cookie Policy';
+            content.innerHTML = getCookieContent();
+            break;
+        case 'sitemap':
+            title.textContent = 'Sitemap';
+            content.innerHTML = getSitemapContent();
+            break;
+        default:
+            return;
+    }
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Re-initialize Lucide icons
+    if (window.lucide && window.lucide.createIcons) {
+        window.lucide.createIcons();
+    }
+}
 
+function closeLegalModal() {
+    const modal = document.getElementById('legal-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'unset';
+    }
+}
+
+// Legal Content Templates
+function getTermsContent() {
+    return `
+        <div class="legal-content">
+            <h3>Terms of Service</h3>
+            <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
+            
+            <h4>1. Acceptance of Terms</h4>
+            <p>By accessing and using RoboTechnique's website and services, you accept and agree to be bound by the terms and provision of this agreement.</p>
+            
+            <h4>2. Use License</h4>
+            <p>Permission is granted to temporarily access the materials on RoboTechnique's website for personal, non-commercial transitory viewing only.</p>
+            
+            <h4>3. Products and Services</h4>
+            <p>All robotics and IoT components are sold "as is". We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including, without limitation, implied warranties or conditions of merchantability.</p>
+            
+            <h4>4. Limitations</h4>
+            <p>In no event shall RoboTechnique or its suppliers be liable for any damages arising out of the use or inability to use the materials on our website.</p>
+            
+            <h4>5. Ordering and Payment</h4>
+            <p>All orders are subject to availability and confirmation of the order price. We reserve the right to refuse any order you place with us.</p>
+            
+            <h4>6. Shipping and Delivery</h4>
+            <p>Shipping times are estimates and not guaranteed. We are not responsible for delays due to customs, weather, or other unforeseen circumstances.</p>
+            
+            <h4>7. Returns and Refunds</h4>
+            <p>Please refer to our Returns Policy for detailed information about returns and refunds.</p>
+            
+            <h4>8. Governing Law</h4>
+            <p>These terms and conditions are governed by and construed in accordance with the laws of India.</p>
+        </div>
+    `;
+}
+
+function getPrivacyContent() {
+    return `
+        <div class="legal-content">
+            <h3>Privacy Policy</h3>
+            <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
+            
+            <h4>1. Information We Collect</h4>
+            <p>We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us for support.</p>
+            
+            <h4>2. How We Use Your Information</h4>
+            <p>We use the information we collect to:</p>
+            <ul>
+                <li>Provide, maintain, and improve our services</li>
+                <li>Process transactions and send related information</li>
+                <li>Send you technical notices and support messages</li>
+                <li>Respond to your comments and questions</li>
+            </ul>
+            
+            <h4>3. Information Sharing</h4>
+            <p>We do not sell, trade, or otherwise transfer your personal information to outside parties except for trusted third parties who assist us in operating our website.</p>
+            
+            <h4>4. Data Security</h4>
+            <p>We implement appropriate technical and organizational security measures to protect your personal information.</p>
+            
+            <h4>5. Your Rights</h4>
+            <p>You have the right to access, correct, or delete your personal information. Contact us to exercise these rights.</p>
+            
+            <h4>6. Cookies</h4>
+            <p>We use cookies and similar tracking technologies to track activity on our website. See our Cookie Policy for more information.</p>
+            
+            <h4>7. Changes to This Policy</h4>
+            <p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+        </div>
+    `;
+}
+
+function getCookieContent() {
+    return `
+        <div class="legal-content">
+            <h3>Cookie Policy</h3>
+            <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
+            
+            <h4>1. What Are Cookies</h4>
+            <p>Cookies are small text files that are placed on your computer by websites that you visit.</p>
+            
+            <h4>2. How We Use Cookies</h4>
+            <p>We use cookies for the following purposes:</p>
+            <ul>
+                <li><strong>Essential Cookies:</strong> Required for the website to function properly</li>
+                <li><strong>Performance Cookies:</strong> Help us understand how visitors interact with our website</li>
+                <li><strong>Functionality Cookies:</strong> Allow the website to remember choices you make</li>
+                <li><strong>Targeting Cookies:</strong> Used to deliver relevant advertisements</li>
+            </ul>
+            
+            <h4>3. Third-Party Cookies</h4>
+            <p>We may also use various third-party cookies to report usage statistics and deliver advertisements.</p>
+            
+            <h4>4. Managing Cookies</h4>
+            <p>You can control and/or delete cookies as you wish. You can delete all cookies that are already on your computer and you can set most browsers to prevent them from being placed.</p>
+            
+            <h4>5. Your Consent</h4>
+            <p>By using our website, you consent to the use of cookies in accordance with this Cookie Policy.</p>
+        </div>
+    `;
+}
+
+function getSitemapContent() {
+    return `
+        <div class="legal-content">
+            <h3>Sitemap</h3>
+            <p>Navigate through our website easily using this sitemap:</p>
+            
+            <h4>Main Pages</h4>
+            <ul>
+                <li><strong>Home:</strong> Welcome to RoboTechnique - Premium Robotics & IoT Components</li>
+                <li><strong>Shop:</strong> Browse our core product line of robotics components</li>
+                <li><strong>Brand:</strong> Learn about our mission and quality standards</li>
+                <li><strong>Contact:</strong> Get in touch with our team</li>
+            </ul>
+            
+            <h4>Product Categories</h4>
+            <ul>
+                <li>Microcontrollers & Development Boards</li>
+                <li>Sensors & Modules</li>
+                <li>Motors & Actuators</li>
+                <li>Power Management</li>
+                <li>Communication Modules</li>
+                <li>Robotics Kits</li>
+                <li>IoT Components</li>
+            </ul>
+            
+            <h4>Customer Service</h4>
+            <ul>
+                <li>Shipping Policy</li>
+                <li>Returns & Refunds</li>
+                <li>FAQ</li>
+                <li>Support Center</li>
+                <li>Size Guide</li>
+            </ul>
+            
+            <h4>Legal Pages</h4>
+            <ul>
+                <li>Terms of Service</li>
+                <li>Privacy Policy</li>
+                <li>Cookie Policy</li>
+                <li>Sitemap (this page)</li>
+            </ul>
+        </div>
+    `;
+}
 // Email validation helper
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -2667,7 +2898,7 @@ function showNewsletterToast(message, type = 'success') {
                 .filter(p => p.id !== product.id && (p.category === currentCategory || !product.category))
                 .slice(0, 4); // Return up to 4 similar products
         }
-
+        
         function buyNow(product) {
             if (!product) return;
             
@@ -2731,6 +2962,28 @@ function initEventListeners() {
             }
         });
     }
+    // Legal modal close button
+const legalModalClose = document.getElementById('legal-modal-close');
+const legalModal = document.getElementById('legal-modal');
+
+if (legalModalClose) {
+    legalModalClose.addEventListener('click', closeLegalModal);
+}
+
+if (legalModal) {
+    legalModal.addEventListener('click', (e) => {
+        if (e.target === legalModal) {
+            closeLegalModal();
+        }
+    });
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLegalModal();
+    }
+});
 
     // NEW: Customer Service links click handler
     document.addEventListener('click', function(event) {
@@ -2856,6 +3109,22 @@ function initEventListeners() {
         window.closeProductDetail = closeProductDetail;
         window.buyNow = buyNow;
         window.handleNewsletterSubscription = handleNewsletterSubscription;
+        window.openLegalPage = openLegalPage;
+        window.closeLegalModal = closeLegalModal;
     </script>
+    <!-- Legal Pages Modal -->
+<div id="legal-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-backdrop transition-opacity duration-300 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
+            <h2 id="legal-modal-title" class="text-2xl font-bold text-gray-800">Legal Document</h2>
+            <button id="legal-modal-close" class="p-2 rounded-full hover:bg-gray-200 transition">
+                <i data-lucide="x" class="w-6 h-6 text-gray-700"></i>
+            </button>
+        </div>
+        <div id="legal-modal-content" class="p-6 overflow-y-auto max-h-[70vh]">
+            <!-- Content will be dynamically inserted here -->
+        </div>
+    </div>
+</div>
 </body>
 </html>
