@@ -1210,6 +1210,37 @@
     font-weight: 600;
     color: #1f2937;
 }
+
+/* Fix for products grid visibility */
+#products-grid {
+    min-height: 400px;
+    position: relative;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid #0ea5e9;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
     </style>
 
     <!-- Google Font (Inter) -->
@@ -1586,6 +1617,21 @@
     <!-- Toast Container (for stacking multiple toasts) -->
     <div id="toast-container" class="fixed top-20 right-6 z-[60] flex flex-col space-y-3"></div>
 
+    <!-- Legal Pages Modal -->
+<div id="legal-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-backdrop transition-opacity duration-300 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
+            <h2 id="legal-modal-title" class="text-2xl font-bold text-gray-800">Legal Document</h2>
+            <button id="legal-modal-close" class="p-2 rounded-full hover:bg-gray-200 transition">
+                <i data-lucide="x" class="w-6 h-6 text-gray-700"></i>
+            </button>
+        </div>
+        <div id="legal-modal-content" class="p-6 overflow-y-auto max-h-[70vh]">
+            <!-- Content will be dynamically inserted here -->
+        </div>
+    </div>
+</div>
+
     <script>
         // Global Constants
         const SUPABASE_URL = 'https://lpylrmsbmivlbonsytwv.supabase.co';
@@ -1597,6 +1643,7 @@
         let checkoutDetails = { total: 0, itemCount: 0 };
         let products = []; // Will be loaded from Supabase
         let siteSettings = {}; // Will store shipping, WhatsApp, Amazon settings
+        let productsLoaded = false;
 
         // DOM Elements
         const cartDrawer = document.getElementById('cart-drawer');
@@ -1667,270 +1714,272 @@
         }
         
         // Newsletter subscription handler
-function handleNewsletterSubscription(event) {
-    event.preventDefault(); // Prevent page refresh
-    
-    const form = event.target;
-    const emailInput = form.querySelector('input[type="email"]');
-    const email = emailInput.value.trim();
-    
-    if (!email) {
-        showNewsletterToast('Please enter your email address', 'error');
-        return;
-    }
-    
-    if (!isValidEmail(email)) {
-        showNewsletterToast('Please enter a valid email address', 'error');
-        return;
-    }
-    
-    // Simulate API call - replace with your actual newsletter service
-    console.log('Subscribing email:', email);
-    
-    // Show success message
-    showNewsletterToast('Thank you for subscribing!', 'success');
-    
-    // Clear the input
-    emailInput.value = '';
-}
-// Legal Pages Modal Functions
-function openLegalPage(page) {
-    const modal = document.getElementById('legal-modal');
-    const title = document.getElementById('legal-modal-title');
-    const content = document.getElementById('legal-modal-content');
-    
-    if (!modal || !title || !content) return;
-    
-    // Set content based on the page
-    switch(page) {
-        case 'terms':
-            title.textContent = 'Terms of Service';
-            content.innerHTML = getTermsContent();
-            break;
-        case 'privacy':
-            title.textContent = 'Privacy Policy';
-            content.innerHTML = getPrivacyContent();
-            break;
-        case 'cookie':
-            title.textContent = 'Cookie Policy';
-            content.innerHTML = getCookieContent();
-            break;
-        case 'sitemap':
-            title.textContent = 'Sitemap';
-            content.innerHTML = getSitemapContent();
-            break;
-        default:
-            return;
-    }
-    
-    // Show modal
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    
-    // Re-initialize Lucide icons
-    if (window.lucide && window.lucide.createIcons) {
-        window.lucide.createIcons();
-    }
-}
-
-function closeLegalModal() {
-    const modal = document.getElementById('legal-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        document.body.style.overflow = 'unset';
-    }
-}
-
-// Legal Content Templates
-function getTermsContent() {
-    return `
-        <div class="legal-content">
-            <h3>Terms of Service</h3>
-            <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
+        function handleNewsletterSubscription(event) {
+            event.preventDefault(); // Prevent page refresh
             
-            <h4>1. Acceptance of Terms</h4>
-            <p>By accessing and using RoboTechnique's website and services, you accept and agree to be bound by the terms and provision of this agreement.</p>
+            const form = event.target;
+            const emailInput = form.querySelector('input[type="email"]');
+            const email = emailInput.value.trim();
             
-            <h4>2. Use License</h4>
-            <p>Permission is granted to temporarily access the materials on RoboTechnique's website for personal, non-commercial transitory viewing only.</p>
-            
-            <h4>3. Products and Services</h4>
-            <p>All robotics and IoT components are sold "as is". We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including, without limitation, implied warranties or conditions of merchantability.</p>
-            
-            <h4>4. Limitations</h4>
-            <p>In no event shall RoboTechnique or its suppliers be liable for any damages arising out of the use or inability to use the materials on our website.</p>
-            
-            <h4>5. Ordering and Payment</h4>
-            <p>All orders are subject to availability and confirmation of the order price. We reserve the right to refuse any order you place with us.</p>
-            
-            <h4>6. Shipping and Delivery</h4>
-            <p>Shipping times are estimates and not guaranteed. We are not responsible for delays due to customs, weather, or other unforeseen circumstances.</p>
-            
-            <h4>7. Governing Law</h4>
-            <p>These terms and conditions are governed by and construed in accordance with the laws of India.</p>
-        </div>
-    `;
-}
-
-function getPrivacyContent() {
-    return `
-        <div class="legal-content">
-            <h3>Privacy Policy</h3>
-            <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
-            
-            <h4>1. Information We Collect</h4>
-            <p>We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us for support.</p>
-            
-            <h4>2. How We Use Your Information</h4>
-            <p>We use the information we collect to:</p>
-            <ul>
-                <li>Provide, maintain, and improve our services</li>
-                <li>Process transactions and send related information</li>
-                <li>Send you technical notices and support messages</li>
-                <li>Respond to your comments and questions</li>
-            </ul>
-            
-            <h4>3. Information Sharing</h4>
-            <p>We do not sell, trade, or otherwise transfer your personal information to outside parties except for trusted third parties who assist us in operating our website.</p>
-            
-            <h4>4. Data Security</h4>
-            <p>We implement appropriate technical and organizational security measures to protect your personal information.</p>
-            
-            <h4>5. Your Rights</h4>
-            <p>You have the right to access, correct, or delete your personal information. Contact us to exercise these rights.</p>
-            
-            <h4>6. Cookies</h4>
-            <p>We use cookies and similar tracking technologies to track activity on our website. See our Cookie Policy for more information.</p>
-            
-            <h4>7. Changes to This Policy</h4>
-            <p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
-        </div>
-    `;
-}
-
-function getCookieContent() {
-    return `
-        <div class="legal-content">
-            <h3>Cookie Policy</h3>
-            <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
-            
-            <h4>1. What Are Cookies</h4>
-            <p>Cookies are small text files that are placed on your computer by websites that you visit.</p>
-            
-            <h4>2. How We Use Cookies</h4>
-            <p>We use cookies for the following purposes:</p>
-            <ul>
-                <li><strong>Essential Cookies:</strong> Required for the website to function properly</li>
-                <li><strong>Performance Cookies:</strong> Help us understand how visitors interact with our website</li>
-                <li><strong>Functionality Cookies:</strong> Allow the website to remember choices you make</li>
-                <li><strong>Targeting Cookies:</strong> Used to deliver relevant advertisements</li>
-            </ul>
-            
-            <h4>3. Third-Party Cookies</h4>
-            <p>We may also use various third-party cookies to report usage statistics and deliver advertisements.</p>
-            
-            <h4>4. Managing Cookies</h4>
-            <p>You can control and/or delete cookies as you wish. You can delete all cookies that are already on your computer and you can set most browsers to prevent them from being placed.</p>
-            
-            <h4>5. Your Consent</h4>
-            <p>By using our website, you consent to the use of cookies in accordance with this Cookie Policy.</p>
-        </div>
-    `;
-}
-
-function getSitemapContent() {
-    return `
-        <div class="legal-content">
-            <h3>Sitemap</h3>
-            <p>Navigate through our website easily using this sitemap:</p>
-            
-            <h4>Main Pages</h4>
-            <ul>
-                <li><strong>Home:</strong> Welcome to RoboTechnique - Premium Robotics & IoT Components</li>
-                <li><strong>Shop:</strong> Browse our core product line of robotics components</li>
-                <li><strong>Brand:</strong> Learn about our mission and quality standards</li>
-                <li><strong>Contact:</strong> Get in touch with our team</li>
-            </ul>
-            
-            <h4>Product Categories</h4>
-            <ul>
-                <li>Microcontrollers & Development Boards</li>
-                <li>Sensors & Modules</li>
-                <li>Motors & Actuators</li>
-                <li>Power Management</li>
-                <li>Communication Modules</li>
-                <li>Robotics Kits</li>
-                <li>IoT Components</li>
-            </ul>
-            
-            <h4>Customer Service</h4>
-            <ul>
-                <li>Shipping Policy</li>
-                <li>Returns & Refunds</li>
-                <li>FAQ</li>
-                <li>Support Center</li>
-                <li>Size Guide</li>
-            </ul>
-            
-            <h4>Legal Pages</h4>
-            <ul>
-                <li>Terms of Service</li>
-                <li>Privacy Policy</li>
-                <li>Cookie Policy</li>
-                <li>Sitemap (this page)</li>
-            </ul>
-        </div>
-    `;
-}
-// Email validation helper
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Newsletter toast notification
-function showNewsletterToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
-    
-    toast.className = `flex items-center space-x-3 p-4 ${bgColor} text-white rounded-xl shadow-2xl border-b-4 ${type === 'success' ? 'border-green-300' : 'border-red-300'} opacity-0 translate-y-[-10px] transition-all duration-500 mb-3`;
-    toast.innerHTML = `
-        <i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-5 h-5 ${type === 'success' ? 'text-green-300' : 'text-red-300'}"></i>
-        <span class="font-semibold">${message}</span>
-    `;
-    
-    // Get or create newsletter toast container
-    let container = document.getElementById("newsletter-toast-container");
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "newsletter-toast-container";
-        container.className = "fixed top-32 right-6 z-[60] flex flex-col space-y-3";
-        document.body.appendChild(container);
-    }
-    
-    container.appendChild(toast);
-    
-    // Re-initialize Lucide icons
-    if (window.lucide && window.lucide.createIcons) {
-        window.lucide.createIcons();
-    }
-    
-    // Animate in
-    requestAnimationFrame(() => {
-        toast.classList.remove("opacity-0", "translate-y-[-10px]");
-        toast.classList.add("opacity-100", "translate-y-0");
-    });
-    
-    // Auto-hide after 4 seconds
-    setTimeout(() => {
-        toast.classList.add("opacity-0", "translate-y-[-10px]");
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
+            if (!email) {
+                showNewsletterToast('Please enter your email address', 'error');
+                return;
             }
-        }, 600);
-    }, 4000);
-}
+            
+            if (!isValidEmail(email)) {
+                showNewsletterToast('Please enter a valid email address', 'error');
+                return;
+            }
+            
+            // Simulate API call - replace with your actual newsletter service
+            console.log('Subscribing email:', email);
+            
+            // Show success message
+            showNewsletterToast('Thank you for subscribing!', 'success');
+            
+            // Clear the input
+            emailInput.value = '';
+        }
+
+        // Legal Pages Modal Functions
+        function openLegalPage(page) {
+            const modal = document.getElementById('legal-modal');
+            const title = document.getElementById('legal-modal-title');
+            const content = document.getElementById('legal-modal-content');
+            
+            if (!modal || !title || !content) return;
+            
+            // Set content based on the page
+            switch(page) {
+                case 'terms':
+                    title.textContent = 'Terms of Service';
+                    content.innerHTML = getTermsContent();
+                    break;
+                case 'privacy':
+                    title.textContent = 'Privacy Policy';
+                    content.innerHTML = getPrivacyContent();
+                    break;
+                case 'cookie':
+                    title.textContent = 'Cookie Policy';
+                    content.innerHTML = getCookieContent();
+                    break;
+                case 'sitemap':
+                    title.textContent = 'Sitemap';
+                    content.innerHTML = getSitemapContent();
+                    break;
+                default:
+                    return;
+            }
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // Re-initialize Lucide icons
+            if (window.lucide && window.lucide.createIcons) {
+                window.lucide.createIcons();
+            }
+        }
+
+        function closeLegalModal() {
+            const modal = document.getElementById('legal-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'unset';
+            }
+        }
+
+        // Legal Content Templates
+        function getTermsContent() {
+            return `
+                <div class="legal-content">
+                    <h3>Terms of Service</h3>
+                    <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
+                    
+                    <h4>1. Acceptance of Terms</h4>
+                    <p>By accessing and using RoboTechnique's website and services, you accept and agree to be bound by the terms and provision of this agreement.</p>
+                    
+                    <h4>2. Use License</h4>
+                    <p>Permission is granted to temporarily access the materials on RoboTechnique's website for personal, non-commercial transitory viewing only.</p>
+                    
+                    <h4>3. Products and Services</h4>
+                    <p>All robotics and IoT components are sold "as is". We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including, without limitation, implied warranties or conditions of merchantability.</p>
+                    
+                    <h4>4. Limitations</h4>
+                    <p>In no event shall RoboTechnique or its suppliers be liable for any damages arising out of the use or inability to use the materials on our website.</p>
+                    
+                    <h4>5. Ordering and Payment</h4>
+                    <p>All orders are subject to availability and confirmation of the order price. We reserve the right to refuse any order you place with us.</p>
+                    
+                    <h4>6. Shipping and Delivery</h4>
+                    <p>Shipping times are estimates and not guaranteed. We are not responsible for delays due to customs, weather, or other unforeseen circumstances.</p>
+                    
+                    <h4>7. Governing Law</h4>
+                    <p>These terms and conditions are governed by and construed in accordance with the laws of India.</p>
+                </div>
+            `;
+        }
+
+        function getPrivacyContent() {
+            return `
+                <div class="legal-content">
+                    <h3>Privacy Policy</h3>
+                    <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
+                    
+                    <h4>1. Information We Collect</h4>
+                    <p>We collect information you provide directly to us, such as when you create an account, make a purchase, or contact us for support.</p>
+                    
+                    <h4>2. How We Use Your Information</h4>
+                    <p>We use the information we collect to:</p>
+                    <ul>
+                        <li>Provide, maintain, and improve our services</li>
+                        <li>Process transactions and send related information</li>
+                        <li>Send you technical notices and support messages</li>
+                        <li>Respond to your comments and questions</li>
+                    </ul>
+                    
+                    <h4>3. Information Sharing</h4>
+                    <p>We do not sell, trade, or otherwise transfer your personal information to outside parties except for trusted third parties who assist us in operating our website.</p>
+                    
+                    <h4>4. Data Security</h4>
+                    <p>We implement appropriate technical and organizational security measures to protect your personal information.</p>
+                    
+                    <h4>5. Your Rights</h4>
+                    <p>You have the right to access, correct, or delete your personal information. Contact us to exercise these rights.</p>
+                    
+                    <h4>6. Cookies</h4>
+                    <p>We use cookies and similar tracking technologies to track activity on our website. See our Cookie Policy for more information.</p>
+                    
+                    <h4>7. Changes to This Policy</h4>
+                    <p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+                </div>
+            `;
+        }
+
+        function getCookieContent() {
+            return `
+                <div class="legal-content">
+                    <h3>Cookie Policy</h3>
+                    <p><strong>Last Updated: ${new Date().toLocaleDateString()}</strong></p>
+                    
+                    <h4>1. What Are Cookies</h4>
+                    <p>Cookies are small text files that are placed on your computer by websites that you visit.</p>
+                    
+                    <h4>2. How We Use Cookies</h4>
+                    <p>We use cookies for the following purposes:</p>
+                    <ul>
+                        <li><strong>Essential Cookies:</strong> Required for the website to function properly</li>
+                        <li><strong>Performance Cookies:</strong> Help us understand how visitors interact with our website</li>
+                        <li><strong>Functionality Cookies:</strong> Allow the website to remember choices you make</li>
+                        <li><strong>Targeting Cookies:</strong> Used to deliver relevant advertisements</li>
+                    </ul>
+                    
+                    <h4>3. Third-Party Cookies</h4>
+                    <p>We may also use various third-party cookies to report usage statistics and deliver advertisements.</p>
+                    
+                    <h4>4. Managing Cookies</h4>
+                    <p>You can control and/or delete cookies as you wish. You can delete all cookies that are already on your computer and you can set most browsers to prevent them from being placed.</p>
+                    
+                    <h4>5. Your Consent</h4>
+                    <p>By using our website, you consent to the use of cookies in accordance with this Cookie Policy.</p>
+                </div>
+            `;
+        }
+
+        function getSitemapContent() {
+            return `
+                <div class="legal-content">
+                    <h3>Sitemap</h3>
+                    <p>Navigate through our website easily using this sitemap:</p>
+                    
+                    <h4>Main Pages</h4>
+                    <ul>
+                        <li><strong>Home:</strong> Welcome to RoboTechnique - Premium Robotics & IoT Components</li>
+                        <li><strong>Shop:</strong> Browse our core product line of robotics components</li>
+                        <li><strong>Brand:</strong> Learn about our mission and quality standards</li>
+                        <li><strong>Contact:</strong> Get in touch with our team</li>
+                    </ul>
+                    
+                    <h4>Product Categories</h4>
+                    <ul>
+                        <li>Microcontrollers & Development Boards</li>
+                        <li>Sensors & Modules</li>
+                        <li>Motors & Actuators</li>
+                        <li>Power Management</li>
+                        <li>Communication Modules</li>
+                        <li>Robotics Kits</li>
+                        <li>IoT Components</li>
+                    </ul>
+                    
+                    <h4>Customer Service</h4>
+                    <ul>
+                        <li>Shipping Policy</li>
+                        <li>Returns & Refunds</li>
+                        <li>FAQ</li>
+                        <li>Support Center</li>
+                        <li>Size Guide</li>
+                    </ul>
+                    
+                    <h4>Legal Pages</h4>
+                    <ul>
+                        <li>Terms of Service</li>
+                        <li>Privacy Policy</li>
+                        <li>Cookie Policy</li>
+                        <li>Sitemap (this page)</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Email validation helper
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Newsletter toast notification
+        function showNewsletterToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            
+            toast.className = `flex items-center space-x-3 p-4 ${bgColor} text-white rounded-xl shadow-2xl border-b-4 ${type === 'success' ? 'border-green-300' : 'border-red-300'} opacity-0 translate-y-[-10px] transition-all duration-500 mb-3`;
+            toast.innerHTML = `
+                <i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-5 h-5 ${type === 'success' ? 'text-green-300' : 'text-red-300'}"></i>
+                <span class="font-semibold">${message}</span>
+            `;
+            
+            // Get or create newsletter toast container
+            let container = document.getElementById("newsletter-toast-container");
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "newsletter-toast-container";
+                container.className = "fixed top-32 right-6 z-[60] flex flex-col space-y-3";
+                document.body.appendChild(container);
+            }
+            
+            container.appendChild(toast);
+            
+            // Re-initialize Lucide icons
+            if (window.lucide && window.lucide.createIcons) {
+                window.lucide.createIcons();
+            }
+            
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove("opacity-0", "translate-y-[-10px]");
+                toast.classList.add("opacity-100", "translate-y-0");
+            });
+            
+            // Auto-hide after 4 seconds
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-[-10px]");
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 600);
+            }, 4000);
+        }
 
         function cleanPrice(price) {
             if (typeof price === 'number') return price;
@@ -2437,18 +2486,34 @@ function showNewsletterToast(message, type = 'success') {
             document.body.style.overflow = 'unset';
         }
 
-        // Render Functions
+        // FIXED: Render Products with better error handling and loading states
         function renderProducts() {
-            if (!productsGrid) return;
+            if (!productsGrid) {
+                console.warn('Products grid element not found');
+                return;
+            }
+
+            // Clear existing content safely
+            productsGrid.innerHTML = '';
 
             if (!products || products.length === 0) {
                 productsGrid.innerHTML = `
                     <div class="col-span-4 text-center py-12 content-fade-in">
                         <i data-lucide="package" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
-                        <p class="text-gray-600 text-lg">No products available at the moment.</p>
-                        <p class="text-gray-500 text-sm">Please check back later.</p>
+                        <p class="text-gray-600 text-lg">Loading products...</p>
+                        <p class="text-gray-500 text-sm">Please wait while we load our products.</p>
                     </div>
                 `;
+                
+                // Try to re-render after a short delay if products are empty
+                if (products.length === 0 && !productsLoaded) {
+                    setTimeout(() => {
+                        if (products.length > 0) {
+                            renderProducts();
+                        }
+                    }, 1000);
+                }
+                
                 if (window.lucide && window.lucide.createIcons) {
                     window.lucide.createIcons();
                 }
@@ -2458,84 +2523,105 @@ function showNewsletterToast(message, type = 'success') {
             // Update the grid class for mobile
             productsGrid.className = 'products-grid';
 
-            productsGrid.innerHTML = products.map(product => {
-                const hasAmazonLink = product.amazon_link && product.amazon_link.trim() !== '';
-                const hasFlipkartLink = product.flipkart_link && product.flipkart_link.trim() !== '';
-                const hasAnyTrustedLink = hasAmazonLink || hasFlipkartLink;
+            try {
+                productsGrid.innerHTML = products.map(product => {
+                    const hasAmazonLink = product.amazon_link && product.amazon_link.trim() !== '';
+                    const hasFlipkartLink = product.flipkart_link && product.flipkart_link.trim() !== '';
+                    const hasAnyTrustedLink = hasAmazonLink || hasFlipkartLink;
 
-                return `
-                <div class="product-card scroll-fade-in content-fade-in">
-                    <div class="product-image-container">
-                        <img src="${product.image || 'https://placehold.co/400x300/eeeeee/333333?text=Product+Image'}" 
-                             alt="${product.title || 'Product'}" 
-                             class="product-image"
-                             onerror="this.src='https://placehold.co/400x300/eeeeee/333333?text=Product+Image'">
-                    </div>
-                    
-                    <div class="product-category">${product.category || 'General'}</div>
-                    <h3 class="product-title">${product.title || 'Untitled Product'}</h3>
-                    <div class="product-description collapsed" id="description-${product.id}">
-                        ${product.description || 'High-quality component for your projects.'}
-                    </div>
-                    
-                    <div class="product-price">${formatINR(product.price)}</div>
-                    
-                    <div class="product-actions">
-                        <button onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')}, this)" class="add-to-cart-btn-mobile">
-                            Add to Cart
-                        </button>
+                    return `
+                    <div class="product-card scroll-fade-in content-fade-in">
+                        <div class="product-image-container">
+                            <img src="${product.image || 'https://placehold.co/400x300/eeeeee/333333?text=Product+Image'}" 
+                                 alt="${product.title || 'Product'}" 
+                                 class="product-image"
+                                 onerror="this.src='https://placehold.co/400x300/eeeeee/333333?text=Product+Image'">
+                        </div>
                         
-                        ${hasAnyTrustedLink ? `
-                        <div class="trusted-sites-dropdown">
-                            <button 
-                                id="trusted-sites-button-${product.id}"
-                                onclick="toggleTrustedSites('${product.id}')" 
-                                class="trusted-sites-button-mobile"
-                            >
-                                <div class="flex items-center justify-between">
-                                    <span>Other Sites</span>
-                                    <svg class="w-3 h-3 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </div>
+                        <div class="product-category">${product.category || 'General'}</div>
+                        <h3 class="product-title">${product.title || 'Untitled Product'}</h3>
+                        <div class="product-description collapsed" id="description-${product.id}">
+                            ${product.description || 'High-quality component for your projects.'}
+                        </div>
+                        
+                        <div class="product-price">${formatINR(product.price)}</div>
+                        
+                        <div class="product-actions">
+                            <button onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')}, this)" class="add-to-cart-btn-mobile">
+                                Add to Cart
                             </button>
                             
-                            <div id="trusted-sites-${product.id}" class="trusted-sites-dropdown-content mt-1 space-y-1 transition-all duration-300 ease-in-out">
-                                ${hasAmazonLink ? `
-                                <a href="${product.amazon_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-2 text-xs bg-white text-gray-700 rounded border border-gray-200 hover:border-orange-300">
-                                    <svg class="w-3 h-3 mr-2 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M10.605 2.4c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636zm-.322 13.91l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077zm3.111-3.111l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077z"/>
-                                    </svg>
-                                    Amazon
-                                </a>
-                                ` : ''}
+                            ${hasAnyTrustedLink ? `
+                            <div class="trusted-sites-dropdown">
+                                <button 
+                                    id="trusted-sites-button-${product.id}"
+                                    onclick="toggleTrustedSites('${product.id}')" 
+                                    class="trusted-sites-button-mobile"
+                                >
+                                    <div class="flex items-center justify-between">
+                                        <span>Other Sites</span>
+                                        <svg class="w-3 h-3 transition-transform duration-300 ease-in-out" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </button>
                                 
-                                ${hasFlipkartLink ? `
-                                <a href="${product.flipkart_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-2 text-xs bg-white text-blue-600 rounded border border-gray-200 hover:border-blue-400">
-                                    <svg class="w-3 h-3 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                                    </svg>
-                                    Flipkart
-                                </a>
-                                ` : ''}
+                                <div id="trusted-sites-${product.id}" class="trusted-sites-dropdown-content mt-1 space-y-1 transition-all duration-300 ease-in-out">
+                                    ${hasAmazonLink ? `
+                                    <a href="${product.amazon_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-2 text-xs bg-white text-gray-700 rounded border border-gray-200 hover:border-orange-300">
+                                        <svg class="w-3 h-3 mr-2 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M10.605 2.4c-1.303 0-2.492.515-3.376 1.399l-.023.023c-.883.884-1.398 2.073-1.398 3.376v11.756c0 1.25.5 2.387 1.34 3.23.844.843 1.98.023 3.23.023h4.636c1.25 0 2.386-.819 3.23-.843.843-.843 1.34-1.98 1.34-3.23V6.944c0-1.303-.515-2.492-1.398-3.376l-.023-.023c-.884-.884-2.073-1.399-3.376-1.399h-4.636zm-.322 13.91l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077zm3.111-3.111l-2.008-2.008 1.077-1.077 2.008 2.008-1.077 1.077z"/>
+                                        </svg>
+                                        Amazon
+                                    </a>
+                                    ` : ''}
+                                    
+                                    ${hasFlipkartLink ? `
+                                    <a href="${product.flipkart_link}" target="_blank" rel="noopener noreferrer" class="trusted-sites-link flex items-center py-2 px-2 text-xs bg-white text-blue-600 rounded border border-gray-200 hover:border-blue-400">
+                                        <svg class="w-3 h-3 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                        </svg>
+                                        Flipkart
+                                    </a>
+                                    ` : ''}
+                                </div>
                             </div>
+                            ` : `
+                            <a href="${getAmazonLink()}" target="_blank" rel="noopener noreferrer" class="trusted-sites-button-mobile text-center">
+                                Buy on Amazon
+                            </a>
+                            `}
                         </div>
-                        ` : `
-                        <a href="${getAmazonLink()}" target="_blank" rel="noopener noreferrer" class="trusted-sites-button-mobile text-center">
-                            Buy on Amazon
-                        </a>
-                        `}
                     </div>
-                </div>
-            `}).join('');
+                `}).join('');
 
-            // Re-initialize Lucide icons
-            if (window.lucide && window.lucide.createIcons) {
-                window.lucide.createIcons();
+                // Re-initialize Lucide icons
+                if (window.lucide && window.lucide.createIcons) {
+                    window.lucide.createIcons();
+                }
+
+                // Set up click events for product cards
+                updateProductCardClickEvents();
+                
+                // Initialize scroll animations for new elements
+                initScrollAnimations();
+                
+                console.log(`Successfully rendered ${products.length} products`);
+                productsLoaded = true;
+                
+            } catch (error) {
+                console.error('Error rendering products:', error);
+                productsGrid.innerHTML = `
+                    <div class="col-span-4 text-center py-12 content-fade-in">
+                        <i data-lucide="alert-triangle" class="w-16 h-16 text-red-300 mx-auto mb-4"></i>
+                        <p class="text-gray-600 text-lg">Error loading products</p>
+                        <p class="text-gray-500 text-sm">Please refresh the page or try again later.</p>
+                        <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+                            Refresh Page
+                        </button>
+                    </div>
+                `;
             }
-
-            // Set up click events for product cards
-            updateProductCardClickEvents();
         }
 
         // Helper function to safely update browse button
@@ -2933,81 +3019,82 @@ function showNewsletterToast(message, type = 'success') {
         }
 
         // Event Listeners
-function initEventListeners() {
-    // Cart button
-    if (cartButton) {
-        cartButton.addEventListener('click', openCartDrawer);
-    }
-    
-    // Mobile menu
-    if (mobileMenuButton && mobileMenu) {
-        mobileMenuButton.addEventListener('click', () => {
-            const isOpen = mobileMenu.classList.contains('h-0');
-            if (isOpen) {
-                mobileMenu.classList.remove('h-0', 'opacity-0');
-                mobileMenu.classList.add('h-auto', 'opacity-100');
-                mobileMenuButton.innerHTML = '<i data-lucide="x" class="h-6 w-6"></i>';
-            } else {
-                mobileMenu.classList.add('h-0', 'opacity-0');
-                mobileMenu.classList.remove('h-auto', 'opacity-100');
-                mobileMenuButton.innerHTML = '<i data-lucide="menu" class="h-6 w-6"></i>';
+        function initEventListeners() {
+            // Cart button
+            if (cartButton) {
+                cartButton.addEventListener('click', openCartDrawer);
             }
-            if (window.lucide && window.lucide.createIcons) {
-                window.lucide.createIcons();
-            }
-        });
-    }
-    // Legal modal close button
-const legalModalClose = document.getElementById('legal-modal-close');
-const legalModal = document.getElementById('legal-modal');
-
-if (legalModalClose) {
-    legalModalClose.addEventListener('click', closeLegalModal);
-}
-
-if (legalModal) {
-    legalModal.addEventListener('click', (e) => {
-        if (e.target === legalModal) {
-            closeLegalModal();
-        }
-    });
-}
-
-// Close modal with Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeLegalModal();
-    }
-});
-
-    // NEW: Customer Service links click handler
-    document.addEventListener('click', function(event) {
-        // Check if clicked element is a Customer Service link
-        if (event.target.closest('#customer-service-links a')) {
-            event.preventDefault();
             
-            // Scroll to contact section
-            const contactSection = document.getElementById('contact');
-            if (contactSection) {
-                contactSection.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
+            // Mobile menu
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const isOpen = mobileMenu.classList.contains('h-0');
+                    if (isOpen) {
+                        mobileMenu.classList.remove('h-0', 'opacity-0');
+                        mobileMenu.classList.add('h-auto', 'opacity-100');
+                        mobileMenuButton.innerHTML = '<i data-lucide="x" class="h-6 w-6"></i>';
+                    } else {
+                        mobileMenu.classList.add('h-0', 'opacity-0');
+                        mobileMenu.classList.remove('h-auto', 'opacity-100');
+                        mobileMenuButton.innerHTML = '<i data-lucide="menu" class="h-6 w-6"></i>';
+                    }
+                    if (window.lucide && window.lucide.createIcons) {
+                        window.lucide.createIcons();
+                    }
                 });
             }
             
-            // Close mobile menu if open
-            const mobileMenu = document.getElementById('mobile-menu');
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            if (mobileMenu && mobileMenuButton && !mobileMenu.classList.contains('h-0')) {
-                mobileMenu.classList.add('h-0', 'opacity-0');
-                mobileMenu.classList.remove('h-auto', 'opacity-100');
-                mobileMenuButton.innerHTML = '<i data-lucide="menu" class="h-6 w-6"></i>';
-                if (window.lucide && window.lucide.createIcons) {
-                    window.lucide.createIcons();
-                }
+            // Legal modal close button
+            const legalModalClose = document.getElementById('legal-modal-close');
+            const legalModal = document.getElementById('legal-modal');
+
+            if (legalModalClose) {
+                legalModalClose.addEventListener('click', closeLegalModal);
             }
-        }
-    });
+
+            if (legalModal) {
+                legalModal.addEventListener('click', (e) => {
+                    if (e.target === legalModal) {
+                        closeLegalModal();
+                    }
+                });
+            }
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeLegalModal();
+                }
+            });
+
+            // NEW: Customer Service links click handler
+            document.addEventListener('click', function(event) {
+                // Check if clicked element is a Customer Service link
+                if (event.target.closest('#customer-service-links a')) {
+                    event.preventDefault();
+                    
+                    // Scroll to contact section
+                    const contactSection = document.getElementById('contact');
+                    if (contactSection) {
+                        contactSection.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                    
+                    // Close mobile menu if open
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    const mobileMenuButton = document.getElementById('mobile-menu-button');
+                    if (mobileMenu && mobileMenuButton && !mobileMenu.classList.contains('h-0')) {
+                        mobileMenu.classList.add('h-0', 'opacity-0');
+                        mobileMenu.classList.remove('h-auto', 'opacity-100');
+                        mobileMenuButton.innerHTML = '<i data-lucide="menu" class="h-6 w-6"></i>';
+                        if (window.lucide && window.lucide.createIcons) {
+                            window.lucide.createIcons();
+                        }
+                    }
+                }
+            });
 
             // Close cart when clicking overlay
             if (cartDrawer) {
@@ -3051,30 +3138,34 @@ document.addEventListener('keydown', (e) => {
             });
         }
 
-        // Initialize everything when DOM is loaded
+        // FIXED: Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOM loaded, initializing...');
+            
             // Initialize Lucide icons safely
             if (window.lucide && window.lucide.createIcons) {
                 window.lucide.createIcons();
             }
             
+            // Render actual content first
+            renderActualContent();
+            
             // Load products and settings from Supabase
             try {
+                console.log('Loading products from Supabase...');
                 products = await loadProductsFromSupabase();
                 siteSettings = await loadSettingsFromSupabase();
+                console.log(`Loaded ${products.length} products`);
             } catch (error) {
                 console.error('Error loading initial data:', error);
                 products = [];
                 siteSettings = {};
             }
             
-            // Render actual content with fade-in animation
-            renderActualContent();
-            
-            // Render products
+            // Render products after they are loaded
             renderProducts();
             
-            // Initialize animations and effects AFTER content is rendered
+            // Initialize animations and effects
             setTimeout(() => {
                 initScrollAnimations();
                 initScrollHeader();
@@ -3086,6 +3177,14 @@ document.addEventListener('keydown', (e) => {
             
             // Initialize empty cart drawer
             renderCartDrawer();
+            
+            // Add a fallback: re-render products after 2 seconds if still empty
+            setTimeout(() => {
+                if (products.length === 0 && !productsLoaded) {
+                    console.log('No products loaded, attempting re-render...');
+                    renderProducts();
+                }
+            }, 2000);
         });
 
         // Make functions globally available
@@ -3107,19 +3206,5 @@ document.addEventListener('keydown', (e) => {
         window.openLegalPage = openLegalPage;
         window.closeLegalModal = closeLegalModal;
     </script>
-    <!-- Legal Pages Modal -->
-<div id="legal-modal" class="fixed inset-0 z-[100] flex items-center justify-center modal-backdrop transition-opacity duration-300 hidden">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
-        <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
-            <h2 id="legal-modal-title" class="text-2xl font-bold text-gray-800">Legal Document</h2>
-            <button id="legal-modal-close" class="p-2 rounded-full hover:bg-gray-200 transition">
-                <i data-lucide="x" class="w-6 h-6 text-gray-700"></i>
-            </button>
-        </div>
-        <div id="legal-modal-content" class="p-6 overflow-y-auto max-h-[70vh]">
-            <!-- Content will be dynamically inserted here -->
-        </div>
-    </div>
-</div>
 </body>
 </html>
